@@ -24,47 +24,38 @@
 ### 1. 安装
 
 ```bash
+# 下载运行ChibyTerm建议Python版本为3.11、3.12。
 pip install chibyterm
 ```
 
-> 正式 PyPI 未上线前可用 TestPyPI：  
-> `pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ chibyterm`
-
-### 2. 配置主机
-
-在工作目录创建 `data/hosts.json`（**勿把真实密码提交到公开仓**）：
-
-```json
-{
-  "hosts": [
-    {
-      "id": "demo-1",
-      "name": "my-server",
-      "host": "192.168.1.100",
-      "port": 22,
-      "username": "root",
-      "password": "<set-locally>",
-      "conn_type": "ssh"
-    }
-  ]
-}
-```
-
-### 3. 启动
+### 2. 启动
 
 ```bash
-# 可选：配置 LLM（不配置则仅规则模式）
-export LLM_PROVIDER="openai"
-export OPENAI_API_KEY="sk-..."
-
 uvicorn chibyterm.main:app --host 0.0.0.0 --port 8000
 # Windows PowerShell：
 #   python -m uvicorn chibyterm.main:app --host 127.0.0.1 --port 8000
 ```
 
-### 4. 打开浏览器
+### 3. 打开浏览器
 
 访问 `http://localhost:8000`
+
+**主机和模型配置**：
+
+> 添加主机
+入口：顶栏 「+」 → 添加主机
+
+> 配置模型
+入口：右上角菜单 → 模型设置
+
+> 配完怎么用
+1.「+」 打开主机 → 左侧敲命令
+2.右侧自然语言（需模型已配好）
+3.高危操作看确认卡
+4.多机用 🌐 Fleet
+
+> 注意
+服务从启动时的工作目录读 data/；pip install 后请在自建目录准备 data/ 再启动。
 
 **试试第一条命令**：
 
@@ -123,10 +114,19 @@ pytest -m "not proprietary"
 
 Apache-2.0，详见 [LICENSE](./LICENSE) 和 [NOTICE](./NOTICE)。
 
-上游 **Hermes Agent** 为 MIT 许可证（Copyright Nous Research），作为可选运行时依赖——**不是给 Hermes 改名**；产品品牌为 **Chiby（赤壁）**，开源终端产品名为 **ChibyTerm**。
+产品品牌为 **Chiby（赤壁）**，开源终端产品名为 **ChibyTerm**。
+ChibyTerm 开源版完全独立运行，不依赖任何第三方 Agent 框架。
 
 ---
+## 作者
 
+张全林 · 尚思卓越（北京）科技有限公司 · 架构师
+
+- GitHub: [@mysunsi](https://github.com/mysunsi)
+- 邮箱：285193443@qq.com
+- 项目官网：[chiby.cn](https://chiby.cn)
+
+---
 ## 社区与支持
 
 - GitHub Issues：https://github.com/chiby-ai/chibyterm/issues （公开镜像就绪后）
