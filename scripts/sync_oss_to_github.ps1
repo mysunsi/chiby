@@ -50,7 +50,11 @@ if (-not (Test-Path $khDir)) { New-Item -ItemType Directory -Path $khDir -Force 
 $khPath = Join-Path $khDir "known_hosts"
 $keyFwd = ($keyPath -replace '\\', '/')
 $khFwd = ($khPath -replace '\\', '/')
-$env:GIT_SSH_COMMAND = "$sshExe -i $keyFwd -o IdentitiesOnly=yes -o UserKnownHostsFile=$khFwd -o StrictHostKeyChecking=accept-new"
+# Quote ssh.exe path (contains spaces under Program Files)
+$env:GIT_SSH_COMMAND = "`"$sshExe`" -i `"$keyFwd`" -o IdentitiesOnly=yes -o UserKnownHostsFile=`"$khFwd`" -o StrictHostKeyChecking=accept-new"
+# Avoid global core.sshCommand overriding / duplicating
+git config --global --unset-all core.sshCommand 2>$null
+$env:GIT_SSH = $sshExe
 
 Write-Host "== Auth check =="
 $prevEap = $ErrorActionPreference
