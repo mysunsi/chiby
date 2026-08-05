@@ -35,14 +35,39 @@ email = "285193443@qq.com"
 
 
 [company]
-# 版权主体：个人（不写公司法律实体）
+# 版权主体：个人（不写公司法律实体）——配置意图
 legal_name = "张全林"
+# 核实状态（2026-08-05）：
+#   - 已拍板选项 A：NOTICE =「Copyright 2026 张全林」（个人，非公司）
+#   - 根 LICENSE = 标准 Apache-2.0 全文
+#   - 产品页链接统一指向 https://github.com/mysunsi/chiby
+copyright_status = "personal_zhang_quanlin"
+copyright_needs_human_confirm = false
+copyright_decision = "A"
 
 # 官网
 domain = "https://chiby.cn"
 
 # 安全漏洞报告邮箱
 security_email = "security@chiby.cn"
+
+
+[pypi]
+# OIDC Trusted Publisher 核实（2026-08-05，公开信息可核部分）：
+#   - 正式 PyPI：chibyterm / chibycore 均 404 → 项目尚未创建，谈不上已配 Trusted Publisher
+#   - TestPyPI：chibyterm 0.1.2 存在；Owner=zhangquanlin（个人账号）；试发多为 token/twine，非证明 OIDC 已配
+#   - 仓侧：release/ci/release.yml 已写 id-token: write + gh-action-pypi-publish（OIDC 就绪）
+#   - 缺：在 PyPI（及可选 TestPyPI）为 chibycore、chibyterm 分别添加 Trusted Publisher：
+#       Owner=mysunsi, Repository=chiby, Workflow=release.yml, Environment=（若未用则留空）
+#   - 结论：【未配置 / 未证实】正式发版前必须人工在 pypi.org 配好（两包各一条）
+oidc_trusted_publisher_configured = false
+oidc_trusted_publisher_status = "not_configured"
+oidc_expected_repo = "mysunsi/chiby"
+oidc_expected_workflow = "release.yml"
+testpypi_owner = "zhangquanlin"
+testpypi_chibyterm_latest = "0.1.2"
+pypi_prod_chibyterm = "missing"
+pypi_prod_chibycore = "missing"
 
 
 [notice]
@@ -88,7 +113,8 @@ extra_notes = """
 4. CI / 发布流水线现状（release/ci/）：
    - ci.yml：Python 3.11；pytest -m "not proprietary"；含 gitleaks；另有 ops-ui build（公开仓是否保留需再确认）
    - release.yml：推 v* tag → build → PyPI OIDC Trusted Publishing（pypa/gh-action-pypi-publish）
-   - 与「长期 PYPI_API_TOKEN」方案不同；若继续用 OIDC，需在 PyPI 项目侧配置 Trusted Publisher（仓库填 mysunsi/chiby），不必强依赖 PYPI_API_TOKEN
+   - 【核实】正式 PyPI 尚无 chibyterm/chibycore 项目；OIDC Trusted Publisher = 未配置
+   - 发版前须在 pypi.org 为两包添加 Trusted Publisher（仓库 mysunsi/chiby，workflow=release.yml）
    - 当前 release.yml 未创建 GitHub Release 草稿；若 auto_github_release=true，需在 workflow 中补 softprops/action-gh-release（draft: true）
 
 5. 发布节奏建议（与 handbook P2-3/P2-4 一致）：
@@ -106,9 +132,9 @@ extra_notes = """
    - 门禁：python scripts/check_oss_boundary.py（脚本默认会跑）
 
 7. 合规与边界：
-   - 许可：Apache-2.0（根 LICENSE / NOTICE；与 GitHub 仓一致）
-   - 版权主体按个人：张全林（不写公司）
-   - 对外域名统一 chiby.cn（仓库内若仍写 chiby.ai，发布时需替换）
+   - 许可：Apache-2.0（根 LICENSE 为标准全文）
+   - 版权：已拍板 A — NOTICE「Copyright 2026 张全林」（个人，非公司）
+   - 对外域名统一 chiby.cn（仓库内若仍写 chiby.ai / chiby-ai，发布时需替换）
    - 闭源勿进公开仓：proprietary/chiby_mobile、proprietary/chiby_hermes_bridge
    - 门禁：python scripts/check_oss_boundary.py
 """
