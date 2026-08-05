@@ -28,6 +28,7 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITLEAKS_ENABLE_UPLOAD: "false"
+          GITLEAKS_CONFIG: .gitleaks.toml
 
   build-ui:
     runs-on: ubuntu-latest

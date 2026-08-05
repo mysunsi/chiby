@@ -1,0 +1,20 @@
+# Gitleaks config for ChibyTerm OSS CI
+# https://github.com/gitleaks/gitleaks
+
+title = "chiby"
+
+[allowlist]
+description = "Vendor bundles, redaction fixtures, upload-script placeholders, UI storage key false positives"
+paths = [
+  '''(^|/)packages/chibyterm/web/vendor/''',
+  '''(^|/)ops-ui/node_modules/''',
+  '''(^|/)tests/test_redaction\.py$''',
+  '''(^|/)scripts/upload_testpypi\.ps1$''',
+  '''\.min\.js$''',
+]
+
+regexTarget = "match"
+regexes = [
+  '''chiby\.aiExpandHint\.seen\.v1''',
+  '''<YOUR_TESTPYPI_TOKEN>''',
+]

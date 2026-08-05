@@ -96,7 +96,8 @@ $AllowRoots = @(
   "uv.lock",
   "conftest.py",
   "path_alias.py",
-  ".gitignore"
+  ".gitignore",
+  ".gitleaks.toml"
 )
 
 $DenyPrefixes = @(

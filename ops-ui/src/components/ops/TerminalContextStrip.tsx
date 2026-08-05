@@ -1,4 +1,3 @@
-import * as React from "react";
 import type { TerminalContextPayload } from "@/bridge/postMessageApi";
 import {
   postOpsFillTerminalComposer,

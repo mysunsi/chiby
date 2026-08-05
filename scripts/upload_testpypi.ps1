@@ -1,10 +1,10 @@
-# P2-3：上传到 TestPyPI（需 API Token）
+# P2-3: upload to TestPyPI (requires API Token)
 #
-# 1) 在 https://test.pypi.org/manage/account/token/ 创建 token
+# 1) Create a token at https://test.pypi.org/manage/account/token/
 # 2) PowerShell:
 #      $env:TWINE_USERNAME = '__token__'
-#      $env:TWINE_PASSWORD = 'pypi-AgENdGVzdC5weXBpLm9yZw...'
-# 3) 本脚本
+#      $env:TWINE_PASSWORD = '<YOUR_TESTPYPI_TOKEN>'
+# 3) Run this script
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot

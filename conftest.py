@@ -108,6 +108,37 @@ def _install_terminal_alias() -> None:
 _install_terminal_alias()
 
 
+def _proprietary_importable() -> bool:
+    try:
+        return importlib.util.find_spec("chiby_mobile") is not None
+    except (ImportError, ModuleNotFoundError, ValueError):
+        return False
+
+
+# OSS CI (no proprietary/ tree): skip collecting modules that hard-import closed-source packages.
+# Otherwise pytest collection fails with ImportError before -m "not proprietary" can deselect.
+if not _proprietary_importable():
+    _tests_dir = _ROOT / "tests"
+    collect_ignore = []
+    if _tests_dir.is_dir():
+        for _p in sorted(_tests_dir.glob("test_*.py")):
+            try:
+                _txt = _p.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            if any(
+                s in _txt
+                for s in (
+                    "terminal.mobile",
+                    "chiby_mobile",
+                    "hermes_bridge",
+                    "chiby_hermes",
+                    "terminal.hermes",
+                )
+            ):
+                collect_ignore.append(str(_p.relative_to(_ROOT)).replace("\\", "/"))
+
+
 # ── 闭源用例自动标记（pytest -m "not proprietary"）──────────────────────────
 # 凡静态 import 闭源包（或别名）的测试文件，自动打 proprietary，避免漏标导致 OSS CI 红。
 import ast
