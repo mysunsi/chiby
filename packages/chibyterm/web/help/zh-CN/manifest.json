@@ -1,0 +1,15 @@
+{
+  "title": "ChibyTerm 帮助",
+  "default": "quick-start",
+  "items": [
+    { "id": "quick-start", "title": "快速开始", "file": "quick-start.md" },
+    { "id": "hosts-terminal", "title": "主机与终端", "file": "hosts-terminal.md" },
+    { "id": "fleet", "title": "Fleet（集群群发）", "file": "fleet.md" },
+    { "id": "natural-language", "title": "自然语言运维", "file": "natural-language.md" },
+    { "id": "llm-settings", "title": "模型设置", "file": "llm-settings.md" },
+    { "id": "safety", "title": "确认卡与安全", "file": "safety.md" },
+    { "id": "knowledge", "title": "知识库与文档库", "file": "knowledge.md" },
+    { "id": "account", "title": "登录与账号", "file": "account.md" },
+    { "id": "faq", "title": "常见问题", "file": "faq.md" }
+  ]
+}

@@ -1,0 +1,33 @@
+name: remote_logs
+title: 远端日志尾部
+description: 读取日志文件尾部（只读；支持 lines / filter）。
+version: "1.0.0"
+author: chiby-maintainers
+category: remote_fs
+skill_pack: remote_fs
+type: host_readonly
+host_required: true
+status: approved
+parameters:
+  - name: host
+    type: string
+    required: true
+  - name: path
+    type: string
+    required: true
+  - name: lines
+    type: integer
+    required: false
+  - name: filter
+    type: string
+    required: false
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+  delegates_to: terminal.mobile.remote_tools
+usage_example: |
+  {"tool":"remote_logs","host":"web1","path":"/var/log/nginx/error.log","lines":80}

@@ -1,0 +1,28 @@
+name: kb_get
+title: 运维知识库详情
+description: 按 entry_id 读取知识条目全文。
+version: "1.0.0"
+author: chiby-maintainers
+category: knowledge
+skill_pack: knowledge
+type: local_readonly
+host_required: false
+status: approved
+parameters:
+  - name: entry_id
+    type: string
+    description: 条目 id
+    required: true
+  - name: entry_type
+    type: string
+    description: kb|script|best_practice
+    required: false
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+usage_example: |
+  {"tool":"kb_get","entry_id":"<id>","entry_type":"kb"}

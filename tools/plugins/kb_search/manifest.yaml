@@ -1,0 +1,32 @@
+name: kb_search
+title: 运维知识库检索
+description: Chiby KnowledgeHub 短经验检索（症状/脚本/最佳实践）。
+version: "1.0.0"
+author: chiby-maintainers
+category: knowledge
+skill_pack: knowledge
+type: local_readonly
+host_required: false
+status: approved
+parameters:
+  - name: q
+    type: string
+    description: 检索词
+    required: true
+  - name: mode
+    type: string
+    description: kb|script|best_practice|all
+    required: false
+  - name: limit
+    type: integer
+    description: 条数
+    required: false
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+usage_example: |
+  {"tool":"kb_search","q":"nginx 502","mode":"kb","limit":5}

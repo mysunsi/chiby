@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "description": "社区工具登记清单（展示用；默认不自动执行）。合入运行时须走 PR 审核。",
+  "tools": [
+    {
+      "id": "contrib_hello_stub",
+      "title": "社区贡献占位示例",
+      "category": "community",
+      "scope": "local",
+      "readonly": true,
+      "status": "proposed",
+      "summary": "演示如何在 MANIFEST 登记；未接入运行时。请参考 _template/ 与 example_echo。",
+      "path": "tools/contrib/_template/",
+      "author": "chiby-maintainers"
+    }
+  ]
+}

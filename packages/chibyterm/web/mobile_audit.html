@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ui-rem-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>掌上AI机房 · 审计大屏</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #152033;
+      --line: #2a3a4f;
+      --text: #e8eef8;
+      --muted: #8b9bb4;
+      --accent: #3d9cfd;
+      --ok: #3ecf8e;
+      --warn: #f0b429;
+      --danger: #f07178;
+    }
+    * { box-sizing: border-box; }
+    /* 滚动条对齐终端 xterm（standalone / index terminal-wrapper） */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #484f58 #000000;
+    }
+    *::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    *::-webkit-scrollbar-track {
+      background: #000000;
+    }
+    *::-webkit-scrollbar-thumb {
+      background: #30363d;
+      border-radius: 4px;
+      border: 2px solid #000000;
+    }
+    *::-webkit-scrollbar-thumb:hover {
+      background: #484f58;
+    }
+    *::-webkit-scrollbar-corner {
+      background: #000000;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(900px 420px at 80% -10%, #1a3d5c 0%, transparent 55%),
+        radial-gradient(700px 380px at 0% 100%, #12263a 0%, var(--bg) 50%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 1.1rem; font-weight: 650; }
+    header nav a {
+      color: var(--accent);
+      text-decoration: none;
+      margin-left: 14px;
+      font-size: 0.9rem;
+    }
+    .toolbar {
+      padding: 12px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,0.15);
+    }
+    .toolbar input, .toolbar select {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.88rem;
+    }
+    .toolbar button {
+      background: var(--accent);
+      color: #041018;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .toolbar .ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      font-weight: 500;
+    }
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 18px 0;
+    }
+    .chip {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .chip b { color: var(--text); font-weight: 650; }
+    main { padding: 12px 18px 24px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: #0e1726; }
+    tr:hover td { background: rgba(61,156,253,0.06); }
+    .ev { font-weight: 650; color: var(--accent); white-space: nowrap; }
+    .ev.exec { color: var(--ok); }
+    .ev.perm { color: var(--warn); }
+    .ev.deny, .ev.error { color: var(--danger); }
+    .mono { font-family: ui-monospace, Consolas, monospace; font-size: 0.8rem; color: var(--muted); }
+    .payload { max-width: 520px; white-space: pre-wrap; word-break: break-word; color: var(--text); }
+    .empty { color: var(--muted); padding: 40px; text-align: center; }
+    #autoLabel { color: var(--muted); font-size: 0.8rem; margin-left: 8px; }
+  </style>
+  <link rel="stylesheet" href="/web-assets/ui_font.css" />
+  <script src="/web-assets/ui_font.js"></script>
+</head>
+<body>
+  <header>
+    <h1>掌上AI机房 · 审计大屏</h1>
+    <nav style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="ui-font-seg" role="group" aria-label="界面字号">
+        <button type="button" data-font-choice="sm">小</button>
+        <button type="button" data-font-choice="md">中</button>
+        <button type="button" data-font-choice="lg">大</button>
+      </div>
+      <a href="/demo/mobile-im">模拟 IM</a>
+      <a href="/api/mobile/demo/rehearsal" target="_blank">彩排 JSON</a>
+      <a href="/api/mobile/im/status" target="_blank">IM 状态</a>
+    </nav>
+  </header>
+  <div class="toolbar">
+    <select id="eventFilter">
+      <option value="">全部事件</option>
+    </select>
+    <input id="hostFilter" placeholder="host_id" />
+    <input id="channelFilter" placeholder="channel (demo/feishu/wecom)" />
+    <input id="qFilter" placeholder="关键词" style="min-width:160px" />
+    <button id="refresh">刷新</button>
+    <button class="ghost" id="autoBtn">自动刷新：开</button>
+    <span id="autoLabel"></span>
+  </div>
+  <div class="toolbar" id="platformToolbar">
+    <strong style="font-size:0.85rem;margin-right:4px">平台审计</strong>
+    <input id="traceFilter" placeholder="trace_id 串联" style="min-width:180px" />
+    <input id="platUserFilter" placeholder="user_id" />
+    <input id="platHostFilter" placeholder="host_id 聚合" />
+    <select id="platEventFilter">
+      <option value="">全部平台事件</option>
+      <option value="fleet_execute">fleet_execute</option>
+      <option value="ai_diagnosis">ai_diagnosis</option>
+      <option value="scheduled_task_run">scheduled_task_run</option>
+      <option value="permission_granted">permission_granted</option>
+      <option value="permission_denied">permission_denied</option>
+      <option value="web_terminal_session">web_terminal_session</option>
+      <option value="knowledge_ingest">knowledge_ingest</option>
+    </select>
+    <button id="platRefresh">查平台审计</button>
+    <button class="ghost" id="traceBtn">按 trace 时间轴</button>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="stats" id="platStats" hidden></div>
+  <main id="mobileMain">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:190px">时间 (UTC)</th>
+          <th style="width:160px">事件</th>
+          <th style="width:120px">主机</th>
+          <th style="width:90px">渠道</th>
+          <th>摘要</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>暂无审计记录。先在模拟 IM 跑一轮演示话术。</div>
+  </main>
+  <main id="platformMain" hidden>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:190px">时间 (UTC)</th>
+          <th style="width:140px">事件</th>
+          <th style="width:120px">outcome</th>
+          <th style="width:160px">trace</th>
+          <th>摘要</th>
+        </tr>
+      </thead>
+      <tbody id="platTbody"></tbody>
+    </table>
+    <div class="empty" id="platEmpty" hidden>暂无平台审计。执行 Fleet / AI 排查 / 定时任务后刷新。</div>
+  </main>
+  <script>
+    let auto = true;
+    let timer = null;
+    const knownEvents = new Set();
+
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function evClass(ev) {
+      const e = String(ev || '');
+      if (/exec|done/i.test(e)) return 'ev exec';
+      if (/permission|perm/i.test(e)) return 'ev perm';
+      if (/deny|error|blocked|fail/i.test(e)) return 'ev deny';
+      return 'ev';
+    }
+
+    function summarize(payload) {
+      if (!payload || typeof payload !== 'object') return '';
+      const parts = [];
+      if (payload.command) parts.push('$ ' + payload.command);
+      if (payload.text) parts.push(String(payload.text).slice(0, 120));
+      if (payload.external_user_id) parts.push('user=' + payload.external_user_id);
+      if (payload.exit_code != null) parts.push('exit=' + payload.exit_code);
+      if (payload.fake === true) parts.push('fake');
+      if (payload.ok === false) parts.push('ok=false');
+      if (payload.error) parts.push(String(payload.error).slice(0, 100));
+      if (payload.planner) parts.push('planner=' + payload.planner);
+      if (!parts.length) {
+        try { return JSON.stringify(payload).slice(0, 220); } catch (_) { return ''; }
+      }
+      return parts.join(' · ');
+    }
+
+    function fillEventOptions(counts) {
+      const sel = document.getElementById('eventFilter');
+      const cur = sel.value;
+      Object.keys(counts || {}).forEach((k) => knownEvents.add(k));
+      const keep = Array.from(knownEvents).sort();
+      sel.innerHTML = '<option value="">全部事件</option>' +
+        keep.map((k) => '<option value="' + esc(k) + '">' + esc(k) + ' (' + (counts[k] || 0) + ')</option>').join('');
+      sel.value = cur;
+    }
+
+    async function load() {
+      const params = new URLSearchParams({ limit: '100' });
+      const ev = document.getElementById('eventFilter').value;
+      const host = document.getElementById('hostFilter').value.trim();
+      const ch = document.getElementById('channelFilter').value.trim();
+      const q = document.getElementById('qFilter').value.trim();
+      if (ev) params.set('event', ev);
+      if (host) params.set('host_id', host);
+      if (ch) params.set('channel', ch);
+      if (q) params.set('q', q);
+      const data = await fetch('/api/mobile/demo/audit?' + params.toString()).then((r) => r.json());
+      fillEventOptions(data.counts || {});
+      const stats = document.getElementById('stats');
+      const entries = Object.entries(data.counts || {}).sort((a, b) => b[1] - a[1]).slice(0, 12);
+      stats.innerHTML = '<span class="chip">共 <b>' + (data.count || 0) + '</b> 条</span>' +
+        entries.map(([k, v]) => '<span class="chip">' + esc(k) + ' <b>' + v + '</b></span>').join('');
+
+      const items = (data.items || []).slice().reverse();
+      const tb = document.getElementById('tbody');
+      const empty = document.getElementById('empty');
+      if (!items.length) {
+        tb.innerHTML = '';
+        empty.hidden = false;
+        return;
+      }
+      empty.hidden = true;
+      tb.innerHTML = items.map((r) => {
+        const p = r.payload || {};
+        return '<tr>' +
+          '<td class="mono">' + esc(r.ts || '') + '</td>' +
+          '<td class="' + evClass(r.event) + '">' + esc(r.event || '') + '</td>' +
+          '<td class="mono">' + esc(p.host_id || '—') + '</td>' +
+          '<td class="mono">' + esc(p.channel || '—') + '</td>' +
+          '<td class="payload">' + esc(summarize(p)) + '</td>' +
+          '</tr>';
+      }).join('');
+      document.getElementById('autoLabel').textContent =
+        '更新于 ' + new Date().toLocaleTimeString();
+    }
+
+    function setAuto(on) {
+      auto = on;
+      document.getElementById('autoBtn').textContent = '自动刷新：' + (auto ? '开' : '关');
+      if (timer) clearInterval(timer);
+      if (auto) timer = setInterval(load, 4000);
+    }
+
+    function showPlatformView(on) {
+      document.getElementById('mobileMain').hidden = !!on;
+      document.getElementById('platformMain').hidden = !on;
+      document.getElementById('platStats').hidden = !on;
+    }
+
+    async function loadPlatform(opts) {
+      opts = opts || {};
+      showPlatformView(true);
+      const params = new URLSearchParams({ limit: '100' });
+      const ev = document.getElementById('platEventFilter').value;
+      const host = document.getElementById('platHostFilter').value.trim();
+      const user = document.getElementById('platUserFilter').value.trim();
+      const tid = document.getElementById('traceFilter').value.trim();
+      if (ev) params.set('event_type', ev);
+      if (host) params.set('host_id', host);
+      if (user) params.set('user_id', user);
+      if (tid && !opts.forceTrace) params.set('trace_id', tid);
+      let url = '/api/audit?' + params.toString();
+      if (opts.forceTrace && tid) {
+        url = '/api/audit/trace/' + encodeURIComponent(tid) + '?limit=200';
+      }
+      const data = await fetch(url).then((r) => r.json());
+      const items = data.items || [];
+      const stats = document.getElementById('platStats');
+      const counts = data.counts || {};
+      const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      stats.hidden = false;
+      stats.innerHTML = '<span class="chip">平台 <b>' + (data.count || items.length || 0) + '</b> 条</span>' +
+        (tid ? '<span class="chip">trace <b>' + esc(tid) + '</b></span>' : '') +
+        entries.map(([k, v]) => '<span class="chip">' + esc(k) + ' <b>' + v + '</b></span>').join('');
+      const tb = document.getElementById('platTbody');
+      const empty = document.getElementById('platEmpty');
+      if (!items.length) {
+        tb.innerHTML = '';
+        empty.hidden = false;
+        return;
+      }
+      empty.hidden = true;
+      const rows = opts.forceTrace ? items : items.slice().reverse();
+      tb.innerHTML = rows.map((r) => {
+        const hosts = (r.host_ids || []).join(',');
+        const sum = [
+          r.result_summary || '',
+          r.command ? ('$ ' + r.command) : '',
+          hosts ? ('hosts=' + hosts) : '',
+          r.user_id ? ('user=' + r.user_id) : '',
+        ].filter(Boolean).join(' · ');
+        return '<tr>' +
+          '<td class="mono">' + esc(r.timestamp || '') + '</td>' +
+          '<td class="' + evClass(r.event_type) + '">' + esc(r.event_type || '') + '</td>' +
+          '<td class="mono">' + esc(r.outcome || '') + '</td>' +
+          '<td class="mono">' + esc(r.trace_id || '') + '</td>' +
+          '<td class="payload">' + esc(sum.slice(0, 280)) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    document.getElementById('refresh').onclick = () => { showPlatformView(false); load(); };
+    document.getElementById('autoBtn').onclick = () => setAuto(!auto);
+    document.getElementById('platRefresh').onclick = () => loadPlatform();
+    document.getElementById('traceBtn').onclick = () => {
+      const tid = document.getElementById('traceFilter').value.trim();
+      if (!tid) { alert('请先输入 trace_id'); return; }
+      loadPlatform({ forceTrace: true });
+    };
+    ['eventFilter', 'hostFilter', 'channelFilter', 'qFilter'].forEach((id) => {
+      document.getElementById(id).addEventListener('change', () => { showPlatformView(false); load(); });
+      document.getElementById(id).addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { showPlatformView(false); load(); }
+      });
+    });
+    setAuto(true);
+    load();
+  </script>
+<script>if(window.AssistantUiFont)AssistantUiFont.init({remRoot:true,skipXterm:true});</script>
+</body>
+</html>

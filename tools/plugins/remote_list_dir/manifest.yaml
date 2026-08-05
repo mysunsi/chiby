@@ -1,0 +1,29 @@
+name: remote_list_dir
+title: 列出远端目录
+description: 在目标主机列出目录内容（只读）。
+version: "1.0.0"
+author: chiby-maintainers
+category: remote_fs
+skill_pack: remote_fs
+type: host_readonly
+host_required: true
+status: approved
+parameters:
+  - name: host
+    type: string
+    description: 主机 id 或 hostname
+    required: true
+  - name: path
+    type: string
+    description: 远端目录路径
+    required: true
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+  delegates_to: terminal.mobile.remote_tools
+usage_example: |
+  {"tool":"remote_list_dir","host":"web1","path":"/var/log"}

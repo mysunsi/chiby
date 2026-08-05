@@ -1,0 +1,86 @@
+# 在项目根目录执行（使上下文为仓库根、数据目录为 ./data）：
+#   docker compose -f deploy/docker-compose.yml up -d --build
+# 可选：将 deploy/.env.example 复制为 deploy/.env 并填写密钥（未放置 .env 时仍可启动，见下方 env_file required:false）。
+#
+# 数据持久化：宿主机 ./data → 容器 /app/data（SQLite 任务库、自愈知识库、llm_config.json 等）
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: ai-ops-assistant:latest
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      OPS_CELERY_LOCAL: "false"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      DATABASE_URL: sqlite:////app/data/ops.db
+      REMEDIATION_KB_PATH: /app/data/remediation_kb.sqlite
+    volumes:
+      - ../data:/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).read()",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+
+  worker:
+    image: ai-ops-assistant:latest
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      OPS_CELERY_LOCAL: "false"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      DATABASE_URL: sqlite:////app/data/ops.db
+      REMEDIATION_KB_PATH: /app/data/remediation_kb.sqlite
+    volumes:
+      - ../data:/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    command:
+      - celery
+      - -A
+      - chibycore.celery_config:celery_app
+      - worker
+      - -l
+      - info
+      - -c
+      - "2"
+
+volumes:
+  redis-data:

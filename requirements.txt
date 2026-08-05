@@ -1,0 +1,32 @@
+aiosqlite>=0.19
+bcrypt>=4.0,<5.0
+cryptography>=42.0.0
+celery>=5.3
+python-dotenv>=1.0.0
+fastapi>=0.100.0
+httpx>=0.25
+jinja2>=3.1
+paramiko>=3.0
+passlib[bcrypt]>=1.7
+pydantic-settings>=2.0,<2.4
+pydantic>=2.0,<2.8
+python-jose[cryptography]>=3.3
+python-multipart>=0.0.6
+pypsrp>=0.8.0,<0.9
+redis>=5.0
+sqlalchemy>=1.4,<2.0
+streamlit>=1.28
+uvicorn[standard]>=0.23.0
+websockets>=11.0
+pytest>=7.4.0
+pytest-asyncio>=0.24.0
+PyYAML>=6.0
+jsonschema>=4.20.0
+# 上限避免 Py3.8 下新版 litellm + pydantic 的 InputAudio 等前向引用错误
+litellm>=1.40.0,<1.53
+rich>=13.0
+pywinpty>=1.1.6,<3; sys_platform == 'win32'
+# DocHub 企业文档向量检索 MVP
+chromadb>=0.4.0,<1.0
+pypdf>=4.0
+python-docx>=1.0

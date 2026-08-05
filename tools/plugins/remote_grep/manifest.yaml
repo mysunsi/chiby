@@ -1,0 +1,42 @@
+name: remote_grep
+title: 远端代码/文本搜索
+description: 在目标主机路径下按 pattern 搜索（只读；支持 context/glob/max_hits）。
+version: "1.0.0"
+author: chiby-maintainers
+category: remote_fs
+skill_pack: remote_fs
+type: host_readonly
+host_required: true
+status: approved
+parameters:
+  - name: host
+    type: string
+    description: 主机 id 或 hostname
+    required: true
+  - name: path
+    type: string
+    description: 搜索根路径（文件或目录）
+    required: true
+  - name: pattern
+    type: string
+    description: 搜索模式
+    required: true
+  - name: context
+    type: integer
+    required: false
+  - name: glob
+    type: string
+    required: false
+  - name: max_hits
+    type: integer
+    required: false
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+  delegates_to: terminal.mobile.remote_tools
+usage_example: |
+  {"tool":"remote_grep","host":"web1","path":"/home/app","pattern":"def main","context":2}

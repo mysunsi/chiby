@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chiby · 工具市场</title>
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #152033;
+      --line: #2a3a4f;
+      --text: #e8eef8;
+      --muted: #8b9bb4;
+      --accent: #3d9cfd;
+      --ok: #3ecf8e;
+      --warn: #f0b429;
+      --community: #a78bfa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(900px 420px at 80% -10%, #1a3d5c 0%, transparent 55%),
+        radial-gradient(700px 380px at 0% 100%, #12263a 0%, var(--bg) 50%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 1.1rem; font-weight: 650; }
+    header nav a {
+      color: var(--accent);
+      text-decoration: none;
+      margin-left: 14px;
+      font-size: 0.9rem;
+    }
+    .hero {
+      padding: 22px 18px 8px;
+      max-width: 1100px;
+    }
+    .hero p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      max-width: 52rem;
+    }
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 18px 4px;
+    }
+    .stat {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 14px;
+      min-width: 120px;
+    }
+    .stat b { display: block; font-size: 1.25rem; }
+    .stat span { color: var(--muted); font-size: 0.8rem; }
+    .packs {
+      padding: 8px 18px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 1100px;
+    }
+    .pack-chip {
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.18);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .pack-chip.active {
+      border-color: rgba(61,156,253,0.55);
+      color: var(--accent);
+    }
+    .toolbar {
+      padding: 12px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .toolbar input {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.88rem;
+      min-width: 220px;
+      flex: 1;
+      max-width: 360px;
+    }
+    select, button {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.86rem;
+    }
+    button {
+      background: var(--accent);
+      color: #041018;
+      border: 0;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    .links {
+      padding: 0 18px 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .links a { color: var(--accent); margin-right: 14px; }
+    main {
+      padding: 8px 18px 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+      max-width: 1100px;
+    }
+    article {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 150px;
+      cursor: pointer;
+    }
+    article:hover { border-color: rgba(61,156,253,0.45); }
+    article h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 650;
+      word-break: break-all;
+    }
+    article .id {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    article p {
+      margin: 0;
+      font-size: 0.86rem;
+      color: var(--muted);
+      line-height: 1.45;
+      flex: 1;
+    }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .tag.official { color: var(--ok); border-color: rgba(62,207,142,0.4); }
+    .tag.community { color: var(--community); border-color: rgba(167,139,250,0.45); }
+    .tag.ro { color: var(--accent); }
+    .tag.rw { color: var(--warn); }
+    .tag.loaded { color: var(--ok); border-color: rgba(62,207,142,0.45); }
+    .empty, .err {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      padding: 24px 8px;
+    }
+    .err { color: #f07178; }
+    dialog {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      color: var(--text);
+      max-width: 520px;
+      width: calc(100% - 32px);
+      padding: 0;
+    }
+    dialog::backdrop { background: rgba(0,0,0,0.55); }
+    .dlg-hd {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .dlg-hd h2 { margin: 0; font-size: 1rem; }
+    .dlg-bd {
+      padding: 14px 16px 18px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+    .dlg-bd code, .dlg-bd pre {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.78rem;
+      color: var(--text);
+    }
+    .dlg-bd pre {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Chiby · 工具市场</h1>
+    <nav>
+      <a href="/demo/knowledge-hub">知识库</a>
+      <a href="/demo/doc-hub">企业文档</a>
+      <a href="/docs">文档</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <p>
+      Phase 6：发现 / 版本 / 技能包 / 依赖声明。运行时白名单仍以
+      <code>DEFAULT_ALLOWED_TOOLS</code> / <code>hermes_bridge.yaml</code> 为准；
+      社区目录默认<strong>不自动执行</strong>。
+    </p>
+  </section>
+
+  <div class="stats" id="stats"></div>
+  <div class="packs" id="packs"></div>
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="搜索 id / 标题 / 版本 / 摘要…" />
+    <select id="scope">
+      <option value="all">全部来源</option>
+      <option value="official">仅官方</option>
+      <option value="plugins">仅插件</option>
+      <option value="community">仅社区</option>
+    </select>
+    <select id="ro">
+      <option value="all">读/写不限</option>
+      <option value="ro">仅只读</option>
+      <option value="rw">仅变更</option>
+    </select>
+    <select id="loaded">
+      <option value="all">加载状态不限</option>
+      <option value="yes">仅已加载</option>
+    </select>
+    <button type="button" id="reload">刷新</button>
+    <button type="button" class="ghost" id="openApi">打开 JSON</button>
+  </div>
+  <div class="links">
+    <a href="#" id="docsHint">扩展说明书 · docs/extending-agent-tools.md</a>
+    <a href="#" id="phase6Hint">Phase 6 · docs/tool-marketplace-phase6.md</a>
+    <a href="#" id="contribHint">贡献指南 · tools/contrib</a>
+  </div>
+  <main id="grid"><div class="empty">加载中…</div></main>
+
+  <dialog id="detailDlg">
+    <div class="dlg-hd">
+      <h2 id="dlgTitle">详情</h2>
+      <button type="button" class="ghost" id="dlgClose">关闭</button>
+    </div>
+    <div class="dlg-bd" id="dlgBody"></div>
+  </dialog>
+
+  <script>
+    (async function () {
+      const grid = document.getElementById("grid");
+      const stats = document.getElementById("stats");
+      const packsEl = document.getElementById("packs");
+      const dlg = document.getElementById("detailDlg");
+      let catalog = null;
+      let activePack = "";
+
+      function badge(text, cls) {
+        return `<span class="tag ${cls || ""}">${escapeHtml(text)}</span>`;
+      }
+
+      function card(item, source) {
+        const status = String(item.status || source);
+        const ro = item.readonly !== false;
+        const sourceLabel =
+          source === "official" ? "官方" : source === "plugins" ? "插件" : "社区";
+        const sourceCls =
+          source === "official" ? "official" : source === "plugins" ? "ro" : "community";
+        const pack = item.skill_pack || item.category || "misc";
+        const tags = [
+          badge(sourceLabel, sourceCls),
+          badge(ro ? "只读" : "变更", ro ? "ro" : "rw"),
+          badge(item.scope || "local"),
+          badge(pack),
+        ];
+        if (item.version) tags.push(badge("v" + item.version));
+        if (item.type) tags.push(badge(item.type));
+        if (item.loaded || status === "loaded") tags.push(badge("已加载", "loaded"));
+        else if (status && status !== "official" && status !== "community" && status !== source) {
+          tags.push(badge(status));
+        }
+        const deps = Array.isArray(item.dependencies) ? item.dependencies : [];
+        if (deps.length) tags.push(badge("依赖 " + deps.length));
+        const path = item.path || item.tutorial || "";
+        const idAttr = escapeHtml(item.id || "");
+        return `<article data-id="${idAttr}" data-source="${source}">
+          <h3>${escapeHtml(item.title || item.id)}</h3>
+          <div class="id">${escapeHtml(item.id)}${item.version ? " · v" + escapeHtml(item.version) : ""}${path ? " · " + escapeHtml(path) : ""}</div>
+          <p>${escapeHtml(item.summary || "暂无摘要")}</p>
+          <div class="tags">${tags.join("")}</div>
+        </article>`;
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function renderPacks() {
+        const packs = catalog && catalog.packs ? catalog.packs : [];
+        const chips = [
+          `<button type="button" class="pack-chip ${activePack ? "" : "active"}" data-pack="">全部技能包</button>`,
+        ];
+        for (const p of packs) {
+          const id = p.id || "";
+          const label = `${p.title || id} (${p.loaded_count || 0}/${p.total || 0})`;
+          chips.push(
+            `<button type="button" class="pack-chip ${activePack === id ? "active" : ""}" data-pack="${escapeHtml(id)}">${escapeHtml(label)}</button>`
+          );
+        }
+        packsEl.innerHTML = chips.join("");
+        packsEl.querySelectorAll(".pack-chip").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            activePack = btn.getAttribute("data-pack") || "";
+            render();
+          });
+        });
+      }
+
+      function render() {
+        if (!catalog) return;
+        renderPacks();
+        const q = (document.getElementById("q").value || "").trim().toLowerCase();
+        const scope = document.getElementById("scope").value;
+        const ro = document.getElementById("ro").value;
+        const loaded = document.getElementById("loaded").value;
+        const rows = [];
+        const push = (list, source) => {
+          for (const item of list || []) {
+            if (scope !== "all" && scope !== source) continue;
+            const readonly = item.readonly !== false;
+            if (ro === "ro" && !readonly) continue;
+            if (ro === "rw" && readonly) continue;
+            if (loaded === "yes" && !(item.loaded || item.status === "loaded")) continue;
+            const pack = String(item.skill_pack || item.category || "");
+            if (activePack && pack !== activePack) continue;
+            const hay = [
+              item.id, item.title, item.summary, item.category, item.skill_pack,
+              item.status, item.path, item.version, item.type,
+            ].join(" ").toLowerCase();
+            if (q && !hay.includes(q)) continue;
+            rows.push(card(item, source));
+          }
+        };
+        push(catalog.official, "official");
+        push(catalog.plugins, "plugins");
+        push(catalog.community, "community");
+        grid.innerHTML = rows.length
+          ? rows.join("")
+          : `<div class="empty">没有匹配的工具。</div>`;
+        grid.querySelectorAll("article[data-id]").forEach((el) => {
+          el.addEventListener("click", () => openDetail(el.getAttribute("data-id"), el.getAttribute("data-source")));
+        });
+        stats.innerHTML = `
+          <div class="stat"><b>${catalog.official_count}</b><span>官方</span></div>
+          <div class="stat"><b>${catalog.plugin_count || 0}</b><span>插件</span></div>
+          <div class="stat"><b>${catalog.plugin_loaded_count || 0}</b><span>已加载</span></div>
+          <div class="stat"><b>${catalog.pack_count || (catalog.packs || []).length}</b><span>技能包</span></div>
+          <div class="stat"><b>${catalog.community_count}</b><span>社区登记</span></div>
+          <div class="stat"><b>${catalog.total}</b><span>合计展示</span></div>
+        `;
+      }
+
+      async function openDetail(id, source) {
+        const dlgTitle = document.getElementById("dlgTitle");
+        const dlgBody = document.getElementById("dlgBody");
+        dlgTitle.textContent = id || "详情";
+        dlgBody.innerHTML = "加载中…";
+        dlg.showModal();
+        try {
+          if (source === "plugins") {
+            const r = await fetch("/api/tools/plugins/" + encodeURIComponent(id), { cache: "no-store" });
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            const data = await r.json();
+            const p = data.plugin || {};
+            const deps = (p.dependencies || [])
+              .map((d) => `${d.id}${d.optional ? " (optional)" : ""}`)
+              .join(", ") || "无";
+            dlgBody.innerHTML = `
+              <div><strong>${escapeHtml(p.title || p.id)}</strong> · v${escapeHtml(p.version || "?")}</div>
+              <div>skill_pack: <code>${escapeHtml(p.skill_pack || p.category || "")}</code> · type: <code>${escapeHtml(p.type || "")}</code></div>
+              <div>loaded: ${p.loaded ? "yes" : "no"} · status: ${escapeHtml(p.status || "")}</div>
+              <div>dependencies: ${escapeHtml(deps)}</div>
+              <p>${escapeHtml(p.summary || "")}</p>
+              <pre>${escapeHtml(JSON.stringify({ parameters: p.parameters || [], usage_example: p.usage_example || "" }, null, 2))}</pre>
+            `;
+          } else {
+            const all = [].concat(catalog.official || [], catalog.community || []);
+            const item = all.find((x) => x.id === id) || {};
+            dlgBody.innerHTML = `<pre>${escapeHtml(JSON.stringify(item, null, 2))}</pre>`;
+          }
+        } catch (e) {
+          dlgBody.innerHTML = `<div class="err">${escapeHtml(e.message || e)}</div>`;
+        }
+      }
+
+      async function load() {
+        grid.innerHTML = `<div class="empty">加载中…</div>`;
+        try {
+          const r = await fetch("/api/tools/catalog", { cache: "no-store" });
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          catalog = await r.json();
+          render();
+        } catch (e) {
+          grid.innerHTML = `<div class="err">加载失败：${escapeHtml(e.message || e)}</div>`;
+        }
+      }
+
+      document.getElementById("q").addEventListener("input", render);
+      document.getElementById("scope").addEventListener("change", render);
+      document.getElementById("ro").addEventListener("change", render);
+      document.getElementById("loaded").addEventListener("change", render);
+      document.getElementById("reload").addEventListener("click", load);
+      document.getElementById("dlgClose").addEventListener("click", () => dlg.close());
+      document.getElementById("openApi").addEventListener("click", () => {
+        window.open("/api/tools/catalog", "_blank");
+      });
+      document.getElementById("docsHint").addEventListener("click", (ev) => {
+        ev.preventDefault();
+        alert("说明书：docs/tool-plugin-architecture.md 与 docs/extending-agent-tools.md。");
+      });
+      document.getElementById("phase6Hint").addEventListener("click", (ev) => {
+        ev.preventDefault();
+        alert("Phase 6：docs/tool-marketplace-phase6.md（发现 / 版本 / 依赖 / 技能包）。");
+      });
+      document.getElementById("contribHint").addEventListener("click", (ev) => {
+        ev.preventDefault();
+        alert("提案 → tools/contrib；审核通过后晋升到 tools/plugins/（manifest status: approved）。");
+      });
+
+      await load();
+    })();
+  </script>
+</body>
+</html>

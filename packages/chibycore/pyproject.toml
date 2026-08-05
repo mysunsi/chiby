@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chibycore"
+version = "0.1.2"
+description = "ChibyTerm core — execution gateway, closure, KnowledgeHub, DocHub"
+readme = { text = "ChibyCore — open-source execution & knowledge plane for ChibyTerm.\n", content-type = "text/markdown" }
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Chiby" }]
+dependencies = [
+    "fastapi>=0.100.0",
+    "pydantic>=2.0,<2.8",
+    "pydantic-settings>=2.0,<2.4",
+    "PyYAML>=6.0",
+    "httpx>=0.25",
+    "paramiko>=3.0",
+    "cryptography>=42.0.0",
+    "python-dotenv>=1.0.0",
+    "sqlalchemy>=1.4,<2.0",
+    "aiosqlite>=0.19",
+    "jinja2>=3.1",
+    "jsonschema>=4.20.0",
+    "rich>=13.0",
+    "pypsrp>=0.8.0,<0.9",
+    "celery>=5.3",
+    "redis>=5.0",
+    "litellm>=1.40.0,<1.53",
+    "chromadb>=0.4.0,<1.0",
+    "pypdf>=4.0",
+    "python-docx>=1.0",
+    "bcrypt>=4.0,<5.0",
+    "passlib[bcrypt]>=1.7",
+    "python-jose[cryptography]>=3.3",
+]
+
+[project.urls]
+Homepage = "https://chiby.ai"
+Repository = "https://github.com/chiby-ai/chibyterm"
+
+[tool.setuptools.package-dir]
+chibycore = "."
+
+[tool.setuptools]
+packages = [
+    "chibycore",
+    "chibycore.doc_hub",
+    "chibycore.healing",
+    "chibycore.intent_broadcast",
+    "chibycore.knowledge_hub",
+    "chibycore.knowledge_orchestrator",
+]
+
+[tool.setuptools.package-data]
+chibycore = ["rules/*.yaml", "rules/*.yml"]

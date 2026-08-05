@@ -1,0 +1,36 @@
+name: remote_mkdir
+title: 创建远端目录
+description: 在目标主机创建目录（须确认；支持 hosts 多机展开）。全能型下随 confirm_changes。
+version: "1.0.0"
+author: chiby-maintainers
+category: remote_fs
+skill_pack: remote_fs
+type: host_write
+host_required: true
+status: approved
+parameters:
+  - name: host
+    type: string
+    required: false
+  - name: hosts
+    type: array
+    required: false
+  - name: path
+    type: string
+    required: true
+confirm_fields:
+  - host
+  - hosts
+  - path
+  - preview
+security:
+  risk_level: medium
+  needs_confirmation: true
+  is_mutate: true
+  read_only: false
+executor:
+  type: python_function
+  entry: run
+  delegates_to: terminal.mobile.remote_tools
+usage_example: |
+  {"tool":"remote_mkdir","host":"web1","path":"/tmp/app_data"}

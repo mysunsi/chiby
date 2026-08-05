@@ -1,0 +1,53 @@
+name: remote_write_file
+title: 写入远端文件
+description: 在目标主机写入文件（须确认卡；支持 content / attachment_id、分块与自动备份）。
+version: "1.0.0"
+author: chiby-maintainers
+category: remote_fs
+skill_pack: remote_fs
+type: host_write
+host_required: true
+status: approved
+parameters:
+  - name: host
+    type: string
+    description: 主机 id（或用 hosts 多机分发）
+    required: false
+  - name: hosts
+    type: array
+    description: 多机分发目标列表
+    required: false
+  - name: path
+    type: string
+    description: 远端绝对路径
+    required: true
+  - name: content
+    type: string
+    description: 文本内容（与 attachment_id 二选一）
+    required: false
+  - name: attachment_id
+    type: string
+    description: 聊天附件 id
+    required: false
+confirm_fields:
+  - host
+  - hosts
+  - path
+  - preview
+  - attachment_id
+  - content_preview
+security:
+  risk_level: medium
+  needs_confirmation: true
+  is_mutate: true
+  read_only: false
+executor:
+  type: python_function
+  entry: run
+  delegates_to: terminal.mobile.remote_tools
+dependencies:
+  - id: remote_read_file
+    kind: tool
+    optional: true
+usage_example: |
+  {"tool":"remote_write_file","host":"web1","path":"/tmp/hello.txt","content":"hi"}

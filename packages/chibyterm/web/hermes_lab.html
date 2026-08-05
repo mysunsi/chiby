@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ui-rem-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>掌上AI机房 · Chiby Lab</title>
+  <style>
+    :root {
+      --bg: #0f1419; --panel: #1a2332; --line: #2a3a4f;
+      --text: #e7eef7; --muted: #8b9bb4; --accent: #3d9cfd;
+      --ok: #3ecf8e; --warn: #f0b429; --danger: #f07178;
+    }
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #484f58 #000; }
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-track { background: #000; }
+    *::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; border: 2px solid #000; }
+    *::-webkit-scrollbar-thumb:hover { background: #484f58; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text);
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(900px 480px at 10% -10%, #1b3a5a 0%, var(--bg) 55%);
+    }
+    header {
+      padding: 14px 18px; border-bottom: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 10px;
+      background: rgba(15,20,25,0.92);
+    }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    header a { color: var(--accent); text-decoration: none; margin-left: 12px; font-size: 0.88rem; }
+    main { max-width: 1100px; margin: 0 auto; padding: 16px 14px 40px; display: grid; gap: 14px; }
+    .card {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+    }
+    .card h2 { margin: 0 0 10px; font-size: 0.98rem; }
+    .muted { color: var(--muted); font-size: 0.85rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+    .skill {
+      border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer;
+      background: rgba(0,0,0,0.2);
+    }
+    .skill:hover { border-color: var(--accent); }
+    .skill .name { font-weight: 600; font-size: 0.9rem; }
+    .skill .desc { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+    .badge {
+      display: inline-block; font-size: 0.7rem; padding: 2px 6px; border-radius: 6px;
+      background: rgba(61,156,253,0.15); color: var(--accent); margin-right: 4px;
+    }
+    pre {
+      margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 0.8rem;
+      background: #0c1218; border: 1px solid var(--line); border-radius: 8px; padding: 10px; max-height: 50vh; overflow: auto;
+    }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .tabs button {
+      border: 1px solid var(--line); background: transparent; color: var(--text);
+      border-radius: 8px; padding: 6px 12px; cursor: pointer;
+    }
+    .tabs button.on { border-color: var(--accent); color: var(--accent); }
+    input[type=text] {
+      width: 100%; border: 1px solid var(--line); background: #0c1218; color: var(--text);
+      border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+    }
+    .tree ul { list-style: none; padding-left: 1.1em; margin: 4px 0; }
+    .tree li { font-size: 0.85rem; margin: 2px 0; }
+    .err { color: var(--danger); }
+    .ok { color: var(--ok); }
+  </style>
+  <link rel="stylesheet" href="/web-assets/ui_font.css" />
+  <script src="/web-assets/ui_font.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Chiby Lab · Skills / MCP / 记忆 / 目录树</h1>
+    <nav style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="ui-font-seg" role="group" aria-label="界面字号">
+        <button type="button" data-font-choice="sm">小</button>
+        <button type="button" data-font-choice="md">中</button>
+        <button type="button" data-font-choice="lg">大</button>
+      </div>
+      <a href="/demo/mobile-im">模拟 IM</a>
+      <a href="/demo/mobile-jobs">多选任务</a>
+      <a href="/demo/mobile-audit">审计</a>
+    </nav>
+  </header>
+  <main>
+    <section class="card">
+      <p class="muted" style="margin:0">
+        IM「编程模式」在<strong>已绑定远程主机</strong>上写代码（SSH/WinRM 无头），不依赖本页
+        <code>native_workspace</code>。本页目录树仅用于本机白名单内省 / 桌面 Tab。
+      </p>
+    </section>
+    <section class="card" id="healthCard">
+      <h2>桥状态</h2>
+      <div class="muted" id="healthLine">加载中…</div>
+    </section>
+    <section class="card">
+      <div class="tabs">
+        <button type="button" class="on" data-tab="skills">Skills</button>
+        <button type="button" data-tab="mcp">MCP</button>
+        <button type="button" data-tab="memory">记忆</button>
+        <button type="button" data-tab="tree">目录树</button>
+      </div>
+      <div id="panel-skills">
+        <input type="text" id="skillFilter" placeholder="筛选名称 / 分类…" />
+        <div class="grid" id="skillGrid"></div>
+        <div id="skillDetail" style="margin-top:12px;display:none">
+          <h2 id="skillTitle">详情</h2>
+          <pre id="skillBody"></pre>
+        </div>
+      </div>
+      <div id="panel-mcp" hidden>
+        <div id="mcpList" class="muted">—</div>
+      </div>
+      <div id="panel-memory" hidden>
+        <div id="memoryList"></div>
+      </div>
+      <div id="panel-tree" hidden>
+        <input type="text" id="treePath" placeholder="路径（须在 native_workspace.allowed_paths 内）" />
+        <button type="button" id="treeBtn" style="margin-bottom:8px;border:1px solid var(--line);background:var(--accent);color:#041018;border-radius:8px;padding:6px 12px;cursor:pointer">加载</button>
+        <div class="tree" id="treeView"></div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const panels = ['skills', 'mcp', 'memory', 'tree'];
+    document.querySelectorAll('.tabs button').forEach((b) => {
+      b.onclick = () => {
+        document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('on', x === b));
+        panels.forEach((id) => {
+          document.getElementById('panel-' + id).hidden = id !== b.getAttribute('data-tab');
+        });
+      };
+    });
+
+    async function loadHealth() {
+      const el = document.getElementById('healthLine');
+      try {
+        const r = await fetch('/api/hermes/health');
+        const d = await r.json();
+        const nw = d.native_workspace || {};
+        const rt = d.remote_tools || {};
+        el.innerHTML =
+          (d.enabled ? '<span class="ok">桥已启用</span>' : '<span class="err">桥未启用</span>') +
+          ' · plan_only=' + d.plan_only +
+          ' · MCP allowlist=[' + (d.mcp_servers || []).join(', ') + ']' +
+          ' · native_workspace=' + (nw.enabled ? ('开 · ' + (nw.allowed_paths || []).join(' | ')) : '关') +
+          ' · remote_tools=' + (rt.enabled ? '<span class="ok">开·A2</span>' : '关·A1') +
+          '<br/><span class="muted">HERMES_HOME=' + (d.hermes_home || '') + '</span>';
+        if (nw.enabled && (nw.allowed_paths || [])[0]) {
+          document.getElementById('treePath').value = nw.allowed_paths[0];
+        }
+      } catch (e) {
+        el.textContent = '健康检查失败: ' + e;
+      }
+    }
+
+    let allSkills = [];
+    function renderSkills(filter) {
+      const q = (filter || '').trim().toLowerCase();
+      const box = document.getElementById('skillGrid');
+      const rows = allSkills.filter((s) => {
+        if (!q) return true;
+        return (s.name + ' ' + s.category + ' ' + s.description).toLowerCase().includes(q);
+      });
+      box.innerHTML = rows.slice(0, 120).map((s) => (
+        '<div class="skill" data-id="' + encodeURIComponent(s.id) + '">' +
+          (s.category ? '<span class="badge">' + s.category + '</span>' : '') +
+          '<div class="name">' + escapeHtml(s.name) + '</div>' +
+          '<div class="desc">' + escapeHtml(s.description || '') + '</div>' +
+        '</div>'
+      )).join('') || '<div class="muted">无 Skills（检查 HERMES_HOME/skills）</div>';
+      box.querySelectorAll('.skill').forEach((el) => {
+        el.onclick = () => openSkill(decodeURIComponent(el.getAttribute('data-id')));
+      });
+    }
+
+    async function loadSkills() {
+      const r = await fetch('/api/hermes/skills?limit=300');
+      const d = await r.json();
+      allSkills = d.skills || [];
+      renderSkills('');
+    }
+
+    async function openSkill(id) {
+      const r = await fetch('/api/hermes/skills/' + encodeURIComponent(id));
+      if (!r.ok) { alert('加载失败'); return; }
+      const d = await r.json();
+      const s = d.skill || {};
+      document.getElementById('skillDetail').style.display = 'block';
+      document.getElementById('skillTitle').textContent = s.name || id;
+      document.getElementById('skillBody').textContent =
+        (s.description ? s.description + '\n\n' : '') + (s.body || '');
+    }
+
+    async function loadMcp() {
+      const el = document.getElementById('mcpList');
+      const r = await fetch('/api/hermes/mcp');
+      const d = await r.json();
+      const servers = d.servers || [];
+      if (!servers.length) {
+        el.innerHTML = '<span class="muted">无 MCP（配置 mcp_servers allowlist 与上游 Hermes config.yaml）</span><br/>' +
+          '<span class="muted">' + (d.note || '') + '</span>';
+        return;
+      }
+      el.innerHTML = servers.map((s) => (
+        '<div style="margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:8px">' +
+          '<span class="badge">🔌 MCP</span> <b>' + escapeHtml(s.name) + '</b>' +
+          (s.enabled ? ' <span class="ok">enabled</span>' : ' <span class="err">disabled</span>') +
+          '<div class="muted">前缀 ' + escapeHtml(s.tool_name_prefix || '') + '</div>' +
+        '</div>'
+      )).join('');
+    }
+
+    async function loadMemory() {
+      const el = document.getElementById('memoryList');
+      const r = await fetch('/api/hermes/memory');
+      const d = await r.json();
+      const files = d.files || [];
+      if (!files.length) {
+        el.innerHTML = '<div class="muted">无 memories/*.md</div>';
+        return;
+      }
+      el.innerHTML = files.map((f) => (
+        '<div style="margin-bottom:12px"><h2 style="font-size:0.9rem;margin:0 0 6px">' +
+          escapeHtml(f.name) +
+          (f.truncated ? ' <span class="badge">truncated</span>' : '') +
+          '</h2><pre>' + escapeHtml(f.content || f.error || '') + '</pre></div>'
+      )).join('');
+    }
+
+    function renderTreeNodes(nodes) {
+      if (!nodes || !nodes.length) return '';
+      return '<ul>' + nodes.map((n) => (
+        '<li>' + (n.type === 'dir' ? '📁 ' : '📄 ') + escapeHtml(n.name) +
+        (n.children ? renderTreeNodes(n.children) : '') +
+        '</li>'
+      )).join('') + '</ul>';
+    }
+
+    async function loadTree() {
+      const path = document.getElementById('treePath').value.trim();
+      const el = document.getElementById('treeView');
+      if (!path) { el.innerHTML = '<span class="err">请填写路径</span>'; return; }
+      el.innerHTML = '<span class="muted">加载中…</span>';
+      const r = await fetch('/api/hermes/files/tree?path=' + encodeURIComponent(path) + '&max_depth=3');
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        el.innerHTML = '<span class="err">' + escapeHtml(d.detail || d.error || r.statusText) + '</span>';
+        return;
+      }
+      el.innerHTML = renderTreeNodes(d.nodes || []) || '<span class="muted">空</span>';
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[c]);
+    }
+
+    document.getElementById('skillFilter').oninput = (e) => renderSkills(e.target.value);
+    document.getElementById('treeBtn').onclick = loadTree;
+    loadHealth();
+    loadSkills();
+    loadMcp();
+    loadMemory();
+  </script>
+<script>if(window.AssistantUiFont)AssistantUiFont.init({remRoot:true,skipXterm:true});</script>
+</body>
+</html>

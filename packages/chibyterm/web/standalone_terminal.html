@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChibyTerm — 赤壁终端</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" crossorigin="anonymous">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body { background: #0d1117; }
+    .terminal-wrapper {
+      position: fixed; top: 28px; left: 0; right: 0; bottom: 0;
+      background: #000; padding: 4px; box-sizing: border-box;
+    }
+    #terminal { width: 100%; height: 100%; }
+    /* 与主界面一致：黑底滚动条；悬停且确有滚动内容时再显示 */
+    #terminal .xterm-viewport {
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    #terminal .xterm-viewport::-webkit-scrollbar { width: 0; height: 0; }
+    .terminal-wrapper:hover #terminal.has-scrollback .xterm-viewport {
+      scrollbar-width: thin;
+      scrollbar-color: #484f58 #000000;
+    }
+    .terminal-wrapper:hover #terminal.has-scrollback .xterm-viewport::-webkit-scrollbar { width: 8px; }
+    .terminal-wrapper:hover #terminal.has-scrollback .xterm-viewport::-webkit-scrollbar-track { background: #000000; }
+    .terminal-wrapper:hover #terminal.has-scrollback .xterm-viewport::-webkit-scrollbar-thumb {
+      background: #30363d; border-radius: 4px; border: 2px solid #000000;
+    }
+    .terminal-wrapper:hover #terminal.has-scrollback .xterm-viewport::-webkit-scrollbar-thumb:hover { background: #484f58; }
+    .terminal-wrapper:hover #terminal.has-scrollback .xterm-viewport::-webkit-scrollbar:horizontal { height: 0; }
+    /* 状态栏 */
+    #status-bar {
+      position: fixed; top: 0; left: 0; right: 0; height: 28px;
+      background: #161b22; border-bottom: 1px solid #30363d;
+      display: flex; align-items: center; padding: 0 12px;
+      font-size: var(--fs-sm, 12px); color: #8b949e; z-index: 10;
+      font-family: 'Courier New', monospace;
+      gap: 8px;
+    }
+    #status-bar .spacer { flex: 1; }
+    #status-bar .ui-font-seg button { padding: 1px 8px; border-radius: 6px; }
+    #status-bar .dot {
+      width: 8px; height: 8px; border-radius: 50%; margin-right: 6px;
+    }
+    .dot.connecting { background: #d29922; animation: pulse 1s infinite; }
+    .dot.connected  { background: #3fb950; }
+    .dot.error      { background: #f85149; }
+    .dot.disconnected { background: #8b949e; }
+    #conn-info { margin-left: 16px; color: #58a6ff; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+  <link rel="stylesheet" href="/web-assets/ui_font.css" />
+  <script src="/web-assets/ui_font.js"></script>
+</head>
+<body>
+  <div id="status-bar">
+    <div class="dot disconnected" id="status-dot"></div>
+    <span id="status-text">连接中...</span>
+    <span id="conn-info"></span>
+    <span class="spacer"></span>
+    <div class="ui-font-seg" role="group" aria-label="界面字号">
+      <button type="button" data-font-choice="sm">小</button>
+      <button type="button" data-font-choice="md">中</button>
+      <button type="button" data-font-choice="lg">大</button>
+    </div>
+  </div>
+  <div class="terminal-wrapper" id="terminalWrapper">
+    <div id="terminal"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js" crossorigin="anonymous"></script>
+  <script>
+    // ── 从 URL 获取 session_id ──────────────────────────────────────────────
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id') || params.get('open') || 'default';
+    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+    // ── xterm 初始化 ───────────────────────────────────────────────────────
+    const term = new Terminal({
+      theme: {
+        background:     '#0d1117',
+        foreground:     '#e6edf3',
+        cursor:         '#58a6ff',
+        cursorAccent:   '#0d1117',
+        selectionBackground: 'rgba(88,166,255,0.3)',
+        black:          '#484f58', red: '#f85149', green: '#3fb950', yellow: '#d29922',
+        blue:           '#58a6ff', magenta: '#bc8cff', cyan: '#39c5cf', white: '#b1bac4',
+        brightBlack:    '#6e7681', brightRed: '#ffa198', brightGreen: '#56d364',
+        brightYellow:   '#e3b341', brightBlue: '#79c0ff', brightMagenta: '#d2a8ff',
+        brightCyan:     '#56d4dd', brightWhite: '#f0f6fc',
+      },
+      fontFamily: "'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace",
+      fontSize: (window.AssistantUiFont && AssistantUiFont.xtermSize(AssistantUiFont.current())) || 13,
+      cursorBlink: true, cursorStyle: 'bar',
+    });
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+    const terminalEl = document.getElementById('terminal');
+    term.open(terminalEl);
+    if (window.AssistantUiFont) {
+      AssistantUiFont.registerTerm(term, fitAddon);
+      AssistantUiFont.init({ skipXterm: false });
+    }
+
+    function refreshScrollback() {
+      const vp = term.element && term.element.querySelector('.xterm-viewport');
+      if (!vp || !terminalEl) return;
+      terminalEl.classList.toggle('has-scrollback', vp.scrollHeight > vp.clientHeight + 1);
+    }
+
+    const viewport = term.element && term.element.querySelector('.xterm-viewport');
+    if (viewport) {
+      const onVp = () => requestAnimationFrame(refreshScrollback);
+      viewport.addEventListener('scroll', onVp, { passive: true });
+      new MutationObserver(onVp).observe(viewport, { childList: true, subtree: true, characterData: true });
+    }
+
+    fitAddon.fit();
+    refreshScrollback();
+
+    function resize() {
+      const availH = window.innerHeight - 28;
+      document.getElementById('terminalWrapper').style.height = availH + 'px';
+      try { fitAddon.fit(); } catch(e) {}
+      refreshScrollback();
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({type: 'resize', width: term.cols, height: term.rows}));
+      }
+    }
+    window.addEventListener('resize', resize);
+    setTimeout(resize, 100);
+
+    // ── 状态管理 ───────────────────────────────────────────────────────────
+    function setStatus(state, text) {
+      const dot = document.getElementById('status-dot');
+      const txt = document.getElementById('status-text');
+      dot.className = 'dot ' + (state || 'disconnected');
+      txt.textContent = text || state;
+    }
+
+    // ── WebSocket ──────────────────────────────────────────────────────────
+    let ws = null;
+
+    function connect() {
+      setStatus('connecting', '正在连接...');
+      term.write('\r\n\x1b[33m[正在建立连接...]\x1b[0m\r\n');
+
+      ws = new WebSocket(`${wsProtocol}//${location.host}/ws/terminal/${sessionId}`);
+
+      ws.onopen = async () => {
+        setStatus('connecting', '启动终端...');
+        term.write('\r\n\x1b[33m[终端启动中...]\x1b[0m\r\n');
+      };
+
+      ws.onmessage = (event) => {
+        // JSON 消息（状态、LLM 响应）
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'output') {
+            term.write(msg.data);
+          } else if (msg.type === 'status') {
+            if (msg.status === 'connected') {
+              setStatus('connected', '已连接');
+              document.getElementById('conn-info').textContent = sessionId;
+            }
+          } else if (msg.type === 'error') {
+            term.write('\r\n\x1b[31m[错误] ' + msg.data + '\x1b[0m\r\n');
+            setStatus('error', msg.data);
+          } else if (msg.type === 'ai_stream_start') {
+            term.write('\r\n\x1b[36m[AI 流式输出]\x1b[0m ');
+          } else if (msg.type === 'ai_stream_delta') {
+            term.write(msg.delta || '');
+          } else if (msg.type === 'ai_stream_end') {
+            term.write('\r\n');
+            if (msg.llm_resp && msg.llm_resp.warning) {
+              term.write('\x1b[33m⚠️ ' + msg.llm_resp.warning + '\x1b[0m\r\n');
+            }
+          } else if (msg.type === 'llm_resp') {
+            if (msg.explanation) {
+              term.write('\r\n\x1b[36m[🤖 ' + msg.explanation + ']\x1b[0m\r\n');
+            }
+            if (msg.warning) {
+              term.write('\x1b[33m⚠️ ' + msg.warning + '\x1b[0m\r\n');
+            }
+          } else if (msg.type === 'llm_plan') {
+            term.write('\r\n\x1b[36m[llm_plan]\x1b[0m ' + (msg.explanation || '') + '\r\n');
+            (msg.steps || []).forEach(function (s, i) {
+              term.write('  ' + (i + 1) + '. ' + (s.command || '') + '\r\n');
+            });
+            term.write('\x1b[33m请在弹窗中选择：逐步 / 取消（连续执行需主界面）\x1b[0m\r\n');
+            if (confirm('批准以「逐步」方式执行上述计划？\n（每步执行后确认 OK；危险步会再次确认）')) {
+              ws.send(JSON.stringify({ type: 'approve_plan', plan_id: msg.plan_id, style: 'gated' }));
+            } else {
+              ws.send(JSON.stringify({ type: 'cancel_plan', plan_id: msg.plan_id }));
+            }
+          } else if (msg.type === 'plan_danger') {
+            if (confirm('【危险】' + (msg.warning || '') + '\n\n执行下列命令？\n' + (msg.command || ''))) {
+              ws.send(JSON.stringify({ type: 'confirm', data: 'yes', plan_id: msg.plan_id }));
+            } else {
+              ws.send(JSON.stringify({ type: 'cancel_plan', plan_id: msg.plan_id }));
+            }
+          } else if (msg.type === 'plan_step' && msg.phase === 'awaiting_user') {
+            /* 完整能力见主界面 index.html：本步重试弹窗、retry_kind、可选 OPS_PLAN_STEP_USE_CLOSURE */
+            if (confirm('步骤 ' + (msg.step_index + 1) + '/' + msg.total + '\n本步输出是否 OK？\n命令: ' + (msg.command || ''))) {
+              ws.send(JSON.stringify({
+                type: 'step_ok',
+                plan_id: msg.plan_id,
+                step_index: msg.step_index,
+                verdict: 'continue',
+              }));
+            } else {
+              if (confirm('退出整个计划？（不会在远端终止已发出的命令；否则将「重试」本步）')) {
+                ws.send(JSON.stringify({
+                  type: 'step_ok',
+                  plan_id: msg.plan_id,
+                  step_index: msg.step_index,
+                  verdict: 'abort',
+                }));
+              } else {
+                ws.send(JSON.stringify({
+                  type: 'step_ok',
+                  plan_id: msg.plan_id,
+                  step_index: msg.step_index,
+                  verdict: 'retry',
+                }));
+              }
+            }
+          } else if (msg.type === 'plan_progress' || msg.type === 'plan_finished' || msg.type === 'plan_aborted' || msg.type === 'plan_cancelled' || msg.type === 'pong') {
+          }
+          requestAnimationFrame(refreshScrollback);
+          return;
+        } catch(e) {
+          // 纯文本输出（原始终端内容）
+        }
+        // 直接写文本（PTy 输出）
+        term.write(event.data);
+        requestAnimationFrame(refreshScrollback);
+      };
+
+      ws.onclose = () => {
+        setStatus('disconnected', '已断开');
+        term.write('\r\n\x1b[31m[连接已关闭]\x1b[0m\r\n');
+      };
+
+      ws.onerror = () => {
+        setStatus('error', '连接错误');
+        term.write('\r\n\x1b[31m[WebSocket 连接错误]\x1b[0m\r\n');
+        term.write('\r\n\x1b[33m请确保会话已创建且服务正在运行。\x1b[0m\r\n');
+      };
+    }
+
+    // ── 键盘输入 ───────────────────────────────────────────────────────────
+    term.onData((data) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({type: 'input', data: data}));
+      }
+    });
+
+    // ── 心跳保活 ───────────────────────────────────────────────────────────
+    setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({type: 'ping'}));
+      }
+    }, 25000);
+
+    // ── 启动连接 ───────────────────────────────────────────────────────────
+    connect();
+
+    /* 关页时触发后端释放 WinRM Shell（会话记录可保留；WS 断开亦有延迟回收） */
+    window.addEventListener('beforeunload', function () {
+      try {
+        if (ws && ws.readyState === WebSocket.OPEN) ws.close();
+      } catch (_) {}
+    });
+  </script>
+</body>
+</html>

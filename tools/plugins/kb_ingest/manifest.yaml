@@ -1,0 +1,32 @@
+name: kb_ingest
+title: 运维知识沉淀
+description: 写入经验条目（须确认卡；智能型/全能型）。
+version: "1.0.0"
+author: chiby-maintainers
+category: knowledge
+skill_pack: knowledge
+type: local_write
+host_required: false
+status: approved
+parameters:
+  - name: title
+    type: string
+    required: true
+  - name: symptom
+    type: string
+    required: true
+  - name: root_cause
+    type: string
+    required: false
+  - name: remediation
+    type: string
+    required: false
+security:
+  risk_level: medium
+  needs_confirmation: true
+  read_only: false
+executor:
+  type: python_function
+  entry: run
+usage_example: |
+  {"tool":"kb_ingest","title":"…","symptom":"…","root_cause":"…","remediation":"…"}

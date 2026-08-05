@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChibyTerm — 赤壁终端</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" crossorigin="anonymous">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0d1117;
+      overflow: hidden;
+      height: 100vh;
+    }
+    #terminal {
+      width: 100vw;
+      height: 100vh;
+      padding: 4px;
+    }
+    /* 连接状态栏 */
+    #status-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 28px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 12px;
+      color: #8b949e;
+      z-index: 10;
+      font-family: 'Courier New', monospace;
+    }
+    #status-bar .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    .dot.connecting { background: #d29922; }
+    .dot.connected  { background: #3fb950; }
+    .dot.error      { background: #f85149; }
+    .dot.disconnected { background: #8b949e; }
+    #conn-info {
+      margin-left: 16px;
+      color: #58a6ff;
+    }
+  </style>
+</head>
+<body>
+  <div id="status-bar">
+    <div class="dot disconnected" id="status-dot"></div>
+    <span id="status-text">未连接</span>
+    <span id="conn-info"></span>
+  </div>
+  <div id="terminal"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js" crossorigin="anonymous"></script>
+  <script>
+    // ── 从 URL 参数解析认证信息 ──────────────────────────────────────────────
+    const params = new URLSearchParams(window.location.search);
+    const sessionId  = params.get('session_id')  || crypto.randomUUID().slice(0, 8);
+    const connType   = params.get('conn_type')   || 'local';
+    const host       = params.get('host')         || '127.0.0.1';
+    const port       = parseInt(params.get('port') || '22');
+    const username   = params.get('username')     || '';
+    const password   = params.get('password')     || '';
+    const wsBase     = params.get('ws_base')      || window.location.origin.replace(/^http/, 'ws');
+
+    // ── 初始化 xterm ────────────────────────────────────────────────────────
+    const term = new Terminal({
+      theme: {
+        background:     '#0d1117',
+        foreground:     '#e6edf3',
+        cursor:         '#58a6ff',
+        cursorAccent:   '#0d1117',
+        selectionBackground: '#264f78',
+        black:          '#484f58',
+        red:            '#ff7b72',
+        green:          '#3fb950',
+        yellow:         '#e3b341',
+        blue:           '#58a6ff',
+        magenta:        '#d2a8ff',
+        cyan:           '#39c5cf',
+        white:          '#b1bac4',
+        brightBlack:    '#6e7681',
+        brightRed:      '#ffa198',
+        brightGreen:    '#56d364',
+        brightYellow:   '#f0883e',
+        brightBlue:     '#79c0ff',
+        brightMagenta:  '#bc8cff',
+        brightCyan:     '#56d4dd',
+        brightWhite:    '#f0f6fc',
+      },
+      fontFamily: "'Cascadia Code', 'Fira Code', 'Courier New', monospace",
+      fontSize: 13,
+      lineHeight: 1.2,
+      cursorBlink: true,
+      cursorStyle: 'block',
+      allowProposedApi: true,
+    });
+
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(document.getElementById('terminal'));
+
+    // 计算可用高度（减去状态栏）
+    function resize() {
+      const availH = window.innerHeight - 28;
+      document.getElementById('terminal').style.height = availH + 'px';
+      try { fitAddon.fit(); } catch(e) {}
+      // 通知后端新尺寸
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({type: 'resize', width: term.cols, height: term.rows}));
+      }
+    }
+    window.addEventListener('resize', resize);
+    setTimeout(resize, 100);
+
+    // ── 连接状态更新 ────────────────────────────────────────────────────────
+    function setStatus(state, text) {
+      const dot  = document.getElementById('status-dot');
+      const txt  = document.getElementById('status-text');
+      dot.className  = 'dot ' + state;
+      txt.textContent = text;
+      if (state === 'connected') {
+        dot.className  = 'dot connected';
+        txt.textContent = '已连接';
+      } else if (state === 'error') {
+        dot.className  = 'dot error';
+        txt.textContent = '连接错误';
+      } else if (state === 'connecting') {
+        dot.className  = 'dot connecting';
+        txt.textContent = '连接中...';
+      } else {
+        dot.className  = 'dot disconnected';
+        txt.textContent = '未连接';
+      }
+    }
+
+    // ── WebSocket 核心 ─────────────────────────────────────────────────────
+    let ws = null;
+
+    function connect() {
+      setStatus('connecting');
+      term.write('\x1b[1;34m[正在建立连接...]\x1b[0m\r\n');
+
+      ws = new WebSocket(`${wsBase}/ws/terminal/${sessionId}`);
+      ws.binaryType = 'arraybuffer';
+
+      ws.onopen = async () => {
+        // 发送认证帧
+        const auth = {
+          type:      'auth',
+          conn_type: connType,
+          host:      host,
+          port:      port,
+          username:  username,
+          password:  password,
+          width:     term.cols,
+          height:    term.rows,
+        };
+        ws.send(JSON.stringify(auth));
+      };
+
+      ws.onmessage = (event) => {
+        term.write(event.data);
+        // 如果是连接成功提示，切换状态
+        if (event.data.includes('[已连接') || event.data.includes('[连接')) {
+          setStatus('connected');
+          document.getElementById('conn-info').textContent =
+            `${username}@${host}:${port}`;
+        }
+        if (event.data.includes('[连接失败') || event.data.includes('[连接错误')) {
+          setStatus('error', event.data.replace(/[\r\n]/g, ' '));
+        }
+      };
+
+      ws.onclose = () => {
+        setStatus('disconnected');
+        term.write('\r\n\x1b[31m[连接已关闭]\x1b[0m\r\n');
+      };
+
+      ws.onerror = () => {
+        setStatus('error');
+        term.write('\r\n\x1b[31m[WebSocket 错误]\x1b[0m\r\n');
+      };
+    }
+
+    // ── 键盘输入处理 ───────────────────────────────────────────────────────
+    term.onData((data) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({type: 'input', data: data}));
+      }
+    });
+
+    // ── 心跳保活 ───────────────────────────────────────────────────────────
+    setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({type: 'ping'}));
+      }
+    }, 25000);
+
+    // ── 启动连接 ───────────────────────────────────────────────────────────
+    connect();
+  </script>
+</body>
+</html>

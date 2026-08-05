@@ -1,0 +1,24 @@
+name: example_echo
+title: Hello World 回显
+description: 把用户文本原样回显（截断）。教学/联调用本地只读插件。
+version: "1.0.0"
+author: chiby-maintainers
+category: example
+skill_pack: example
+type: local_readonly
+host_required: false
+status: approved
+parameters:
+  - name: text
+    type: string
+    description: 要回显的字符串
+    required: true
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+usage_example: |
+  {"tool":"example_echo","text":"hello chiby"}

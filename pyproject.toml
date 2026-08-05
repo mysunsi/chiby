@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chibyterm"
+version = "0.1.0"
+description = "ChibyTerm（赤壁终端）— open-source Web ops terminal (closure + KnowledgeHub + DocHub)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Chiby" }]
+# Monorepo editable：依赖见 requirements.txt；分发请构建 packages/*/pyproject.toml
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-asyncio>=0.21", "build", "wheel"]
+
+# P1：闭源插件由独立 wheel 的 entry_points 提供（见 proprietary/*/pyproject.toml）
+# [project.entry-points."chiby.plugins"]  — 开源底座故意不声明闭源 ep
+
+[project.scripts]
+# 可选：chibyterm = "chibyterm.main:..."
+
+[tool.setuptools.package-dir]
+# 正式名 chibyterm / chibycore；terminal 与旧名 ops_* 为过渡别名（同一源码树）
+chibycore = "packages/chibycore"
+chibyterm = "packages/chibyterm"
+terminal = "packages/chibyterm"
+ops_terminal = "packages/chibyterm"
+ops_core = "packages/chibycore"
+
+[tool.setuptools.packages.find]
+where = ["packages"]
+include = ["chibycore*", "chibyterm*"]
+exclude = [
+    "proprietary*",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+pythonpath = [
+    "packages",
+    "proprietary/chiby_mobile/src",
+    "proprietary/chiby_hermes_bridge/src",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "unit: 快速单元测试（无真实网络 / LLM）",
+    "integration: 场景串插件全链路（mock SSH，可用本地 KB/DocHub）",
+    "proprietary: 依赖闭源包（chiby_mobile / chiby_hermes_bridge）；可用 -m 'not proprietary' 过滤",
+]
+filterwarnings = [
+    "ignore::pytest.PytestDeprecationWarning:pytest_asyncio",
+]
+
+# 可选：pip install pytest-cov 后执行核心路径覆盖率
+#   pytest tests/test_remediation_flow.py --cov=remediator.core --cov-report=term-missing

@@ -1,0 +1,29 @@
+name: doc_search
+title: 企业文档语义检索
+description: DocHub 长文档向量/混合检索 TopK。
+version: "1.0.0"
+author: chiby-maintainers
+category: document
+skill_pack: document
+type: local_readonly
+host_required: false
+status: approved
+parameters:
+  - name: q
+    type: string
+    required: true
+  - name: limit
+    type: integer
+    required: false
+  - name: strategy
+    type: string
+    required: false
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+usage_example: |
+  {"tool":"doc_search","q":"变更窗口审批流程","limit":5}

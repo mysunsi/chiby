@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ui-rem-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>掌上AI机房 · 多选主机任务</title>
+  <style>
+    :root {
+      --bg: #101820;
+      --panel: #1a2634;
+      --line: #2c3d52;
+      --text: #e8eef6;
+      --muted: #8a9bb0;
+      --accent: #3d9cfd;
+      --ok: #3ecf8e;
+      --danger: #f07178;
+      --chip: #243447;
+    }
+    * { box-sizing: border-box; }
+    /* 滚动条对齐终端 xterm（standalone / index terminal-wrapper） */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #484f58 #000000;
+    }
+    *::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    *::-webkit-scrollbar-track {
+      background: #000000;
+    }
+    *::-webkit-scrollbar-thumb {
+      background: #30363d;
+      border-radius: 4px;
+      border: 2px solid #000000;
+    }
+    *::-webkit-scrollbar-thumb:hover {
+      background: #484f58;
+    }
+    *::-webkit-scrollbar-corner {
+      background: #000000;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(900px 480px at 0% 0%, #1a3a55 0%, transparent 55%),
+        var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: rgba(16, 24, 32, 0.92);
+    }
+    header h1 { margin: 0; font-size: 1.12rem; font-weight: 650; }
+    header .meta { color: var(--muted); font-size: 0.85rem; }
+    header a { color: var(--accent); text-decoration: none; margin-left: 12px; }
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px 18px 40px;
+      display: grid;
+      gap: 16px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .hint { color: var(--muted); font-size: 0.8rem; margin: 0 0 12px; line-height: 1.45; }
+    .host-list { display: grid; gap: 6px; max-height: 320px; overflow: auto; }
+    .host-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .host-row:hover { background: rgba(255,255,255,0.03); }
+    .host-row.on {
+      border-color: rgba(61,156,253,0.45);
+      background: rgba(61,156,253,0.08);
+    }
+    .host-row input { margin-top: 3px; }
+    .host-row .name { font-weight: 600; font-size: 0.9rem; }
+    .host-row .sub { color: var(--muted); font-size: 0.78rem; margin-top: 2px; }
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 0 6px;
+      border-radius: 3px;
+      margin-left: 6px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .toolbar button, .actions button {
+      background: var(--chip);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+    .toolbar button:hover, .actions button:hover { border-color: var(--accent); }
+    .toolbar button.primary, .actions button.primary {
+      background: rgba(61,156,253,0.2);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .presets button {
+      background: transparent;
+      border: 1px dashed var(--line);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+    .presets button.on {
+      border-style: solid;
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(61,156,253,0.12);
+    }
+    label.field {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin: 8px 0 4px;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      background: #121c28;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 10px;
+      font-size: 0.88rem;
+      font-family: ui-monospace, Consolas, monospace;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    #out {
+      white-space: pre-wrap;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      margin: 0;
+      min-height: 80px;
+    }
+    #out.ok { color: var(--ok); }
+    #out.err { color: var(--danger); }
+    .count { color: var(--muted); font-size: 0.8rem; margin-left: auto; }
+  </style>
+  <link rel="stylesheet" href="/web-assets/ui_font.css" />
+  <script src="/web-assets/ui_font.js"></script>
+</head>
+<body>
+  <header>
+    <h1>掌上AI机房 · 多选主机任务</h1>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="meta" id="statusLine">加载中…</span>
+      <div class="ui-font-seg" role="group" aria-label="界面字号">
+        <button type="button" data-font-choice="sm">小</button>
+        <button type="button" data-font-choice="md">中</button>
+        <button type="button" data-font-choice="lg">大</button>
+      </div>
+      <a href="/demo/mobile-im">模拟 IM</a>
+      <a href="/">Web 终端</a>
+    </div>
+  </header>
+  <main>
+    <section class="card">
+      <h2>1. 选择主机</h2>
+      <p class="hint">本仓自建选机，不依赖小思表单。执行仍走 Assistant 无头扇出；已探测发行版的主机装包/服务命令会按机改写。</p>
+      <div class="toolbar">
+        <button type="button" id="btnAll">全选</button>
+        <button type="button" id="btnNone">清空</button>
+        <button type="button" id="btnReload">刷新列表</button>
+        <span class="count" id="selCount">已选 0</span>
+      </div>
+      <div class="host-list" id="hostList"></div>
+    </section>
+
+    <section class="card">
+      <h2>2. 任务内容（只读）</h2>
+      <div class="presets" id="presets"></div>
+      <label class="field" for="jobName">任务名</label>
+      <input type="text" id="jobName" value="检测 nginx 运行情况" />
+      <label class="field" for="jobCmds">命令（每行一条）</label>
+      <textarea id="jobCmds">systemctl is-active nginx</textarea>
+      <div class="actions">
+        <button type="button" id="btnPreview">预览</button>
+        <button type="button" class="primary" id="btnRun">执行</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3. 结果</h2>
+      <pre id="out">选择主机后点「预览」或「执行」。</pre>
+    </section>
+  </main>
+  <script>
+    const USER = 'demo-user-1';
+    let hosts = [];
+    let selected = new Set();
+    let presets = [];
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function updateCount() {
+      document.getElementById('selCount').textContent = '已选 ' + selected.size;
+    }
+
+    function renderHosts() {
+      const el = document.getElementById('hostList');
+      if (!hosts.length) {
+        el.innerHTML = '<div class="hint">暂无可见主机。请先在 Web 终端添加 SSH/WinRM 主机，并确认 ACL（demo-user-1）。</div>';
+        updateCount();
+        return;
+      }
+      el.innerHTML = hosts.map(h => {
+        const on = selected.has(h.host_id);
+        const pkg = h.pkg_manager && h.pkg_manager !== 'unknown' ? h.pkg_manager : '';
+        const distro = h.pretty_name || h.family || '';
+        const badge = pkg ? '<span class="badge">' + esc(pkg) + '</span>' : '';
+        return (
+          '<label class="host-row' + (on ? ' on' : '') + '" data-id="' + esc(h.host_id) + '">' +
+            '<input type="checkbox" ' + (on ? 'checked' : '') + ' />' +
+            '<div>' +
+              '<div class="name">' + esc(h.name || h.host_id) + badge + '</div>' +
+              '<div class="sub">' + esc(h.conn_type || 'ssh') + '://' + esc(h.ip || '') +
+                (distro ? ' · ' + esc(distro) : '') +
+                ' · <code>' + esc(h.host_id) + '</code></div>' +
+            '</div>' +
+          '</label>'
+        );
+      }).join('');
+      el.querySelectorAll('.host-row').forEach(row => {
+        const id = row.getAttribute('data-id');
+        const cb = row.querySelector('input');
+        const sync = () => {
+          if (cb.checked) selected.add(id); else selected.delete(id);
+          row.classList.toggle('on', cb.checked);
+          updateCount();
+        };
+        cb.addEventListener('change', sync);
+        row.addEventListener('click', (e) => {
+          if (e.target === cb) return;
+          cb.checked = !cb.checked;
+          sync();
+        });
+      });
+      updateCount();
+    }
+
+    function renderPresets() {
+      const el = document.getElementById('presets');
+      el.innerHTML = presets.map(p => (
+        '<button type="button" data-id="' + esc(p.id) + '">' + esc(p.name) + '</button>'
+      )).join('');
+      el.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          el.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+          btn.classList.add('on');
+          const p = presets.find(x => x.id === btn.getAttribute('data-id'));
+          if (!p) return;
+          document.getElementById('jobName').value = p.name || '';
+          document.getElementById('jobCmds').value = (p.commands || []).join('\n');
+        });
+      });
+      const first = el.querySelector('button');
+      if (first) first.classList.add('on');
+    }
+
+    function jobPayload() {
+      const cmds = document.getElementById('jobCmds').value
+        .split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      return {
+        external_user_id: USER,
+        source: 'assistant_ui',
+        job: {
+          name: document.getElementById('jobName').value.trim() || '多主机检查',
+          host_ids: Array.from(selected),
+          commands: cmds,
+          readonly: true,
+          max_parallel: 5,
+          on_fail: 'continue',
+        },
+      };
+    }
+
+    function setOut(text, cls) {
+      const el = document.getElementById('out');
+      el.textContent = text;
+      el.className = cls || '';
+    }
+
+    async function loadHosts() {
+      const resp = await fetch('/api/mobile/jobs/hosts?external_user_id=' + encodeURIComponent(USER));
+      if (!resp.ok) throw new Error('加载主机失败 HTTP ' + resp.status);
+      const data = await resp.json();
+      hosts = data.hosts || [];
+      const keep = new Set(hosts.map(h => h.host_id));
+      selected = new Set([...selected].filter(id => keep.has(id)));
+      if (!selected.size && hosts.length) {
+        hosts.forEach(h => selected.add(h.host_id));
+      }
+      renderHosts();
+      document.getElementById('statusLine').textContent =
+        'hosts=' + hosts.length + ' · user=' + USER;
+    }
+
+    async function loadPresets() {
+      const resp = await fetch('/api/mobile/jobs/presets');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      presets = data.presets || [];
+      renderPresets();
+    }
+
+    document.getElementById('btnAll').onclick = () => {
+      selected = new Set(hosts.map(h => h.host_id));
+      renderHosts();
+    };
+    document.getElementById('btnNone').onclick = () => {
+      selected = new Set();
+      renderHosts();
+    };
+    document.getElementById('btnReload').onclick = () => loadHosts().catch(e => setOut(String(e), 'err'));
+
+    document.getElementById('btnPreview').onclick = async () => {
+      const body = jobPayload();
+      if (body.job.host_ids.length < 1) {
+        setOut('请至少选择一台主机。', 'err');
+        return;
+      }
+      setOut('预览中…');
+      try {
+        const resp = await fetch('/api/mobile/jobs/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          setOut((data.detail || JSON.stringify(data) || ('HTTP ' + resp.status)), 'err');
+          return;
+        }
+        const lines = [
+          '【预览】' + (data.job && data.job.name),
+          '主机：' + ((data.job && data.job.host_ids) || []).join(', '),
+          '模板命令：' + ((data.job && data.job.commands) || []).join(' | '),
+          '',
+          '各机实际命令：',
+        ];
+        (data.per_host_commands || []).forEach(row => {
+          lines.push('- ' + row.host_id + ': ' + (row.commands || []).join(' ; '));
+        });
+        if ((data.skipped_hosts || []).length) {
+          lines.push('', '跳过：' + data.skipped_hosts.map(s => s.host_id + '(' + s.reason + ')').join(', '));
+        }
+        setOut(lines.join('\n'), 'ok');
+      } catch (e) {
+        setOut(String(e && e.message ? e.message : e), 'err');
+      }
+    };
+
+    document.getElementById('btnRun').onclick = async () => {
+      const body = jobPayload();
+      if (body.job.host_ids.length < 1) {
+        setOut('请至少选择一台主机。', 'err');
+        return;
+      }
+      setOut('执行中…');
+      try {
+        const resp = await fetch('/api/mobile/jobs/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          setOut((typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail || data)) || ('HTTP ' + resp.status), 'err');
+          return;
+        }
+        const lines = [
+          '【执行完成】run_id=' + (data.run_id || ''),
+          'status=' + (data.status || ''),
+          '',
+          data.summary || '',
+          '',
+          '各机命令：',
+        ];
+        (data.tasks || []).forEach(t => {
+          lines.push('- ' + t.host_label + ' → ' + (t.commands || []).join(' ; ') + ' · ' + t.status);
+        });
+        setOut(lines.join('\n'), data.status === 'failed' ? 'err' : 'ok');
+      } catch (e) {
+        setOut(String(e && e.message ? e.message : e), 'err');
+      }
+    };
+
+    Promise.all([loadHosts(), loadPresets()]).catch(e => {
+      document.getElementById('statusLine').textContent = '加载失败';
+      setOut(String(e && e.message ? e.message : e), 'err');
+    });
+  </script>
+<script>if(window.AssistantUiFont)AssistantUiFont.init({remRoot:true,skipXterm:true});</script>
+</body>
+</html>

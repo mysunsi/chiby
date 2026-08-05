@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chiby · 知识库管理</title>
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #152033;
+      --line: #2a3a4f;
+      --text: #e8eef8;
+      --muted: #8b9bb4;
+      --accent: #3d9cfd;
+      --ok: #3ecf8e;
+      --warn: #f0b429;
+      --danger: #f07178;
+    }
+    * { box-sizing: border-box; }
+    * { scrollbar-width: thin; scrollbar-color: #484f58 #000; }
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-track { background: #000; }
+    *::-webkit-scrollbar-thumb {
+      background: #30363d; border-radius: 4px; border: 2px solid #000;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(900px 420px at 80% -10%, #1a3d5c 0%, transparent 55%),
+        radial-gradient(700px 380px at 0% 100%, #12263a 0%, var(--bg) 50%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 1.1rem; font-weight: 650; }
+    header nav a {
+      color: var(--accent);
+      text-decoration: none;
+      margin-left: 14px;
+      font-size: 0.9rem;
+    }
+    .toolbar {
+      padding: 12px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,0.15);
+    }
+    .toolbar input, .toolbar select, .form-grid input,
+    .form-grid select, .form-grid textarea {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.88rem;
+    }
+    .toolbar input[type="search"] { min-width: 220px; flex: 1; }
+    button {
+      background: var(--accent);
+      color: #041018;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.86rem;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      font-weight: 500;
+    }
+    button.danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+      font-weight: 600;
+    }
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 18px 0;
+    }
+    .chip {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .chip b { color: var(--text); font-weight: 650; }
+    main {
+      padding: 12px 18px 28px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 14px;
+    }
+    @media (max-width: 960px) {
+      main { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: rgba(21, 32, 51, 0.72);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      min-height: 320px;
+    }
+    .panel h2 {
+      margin: 0;
+      padding: 12px 14px;
+      font-size: 0.92rem;
+      border-bottom: 1px solid var(--line);
+      font-weight: 650;
+    }
+    .list-wrap { max-height: calc(100vh - 220px); overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: #152033; }
+    tr:hover td { background: rgba(61, 156, 253, 0.06); }
+    tr.active td { background: rgba(61, 156, 253, 0.12); }
+    .muted { color: var(--muted); }
+    .tag {
+      display: inline-block;
+      margin: 2px 4px 0 0;
+      padding: 1px 7px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .detail { padding: 14px; }
+    .detail .title { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+    .detail .meta { font-size: 0.8rem; color: var(--muted); margin-bottom: 12px; }
+    .detail .block { margin-bottom: 12px; }
+    .detail .block label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .detail .block pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: inherit;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      background: rgba(0,0,0,0.22);
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+    }
+    .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 50;
+      max-width: 360px;
+    }
+    .toast.show { opacity: 1; }
+    .toast.err { border-color: var(--danger); color: #ffc9cc; }
+    .toast.ok { border-color: var(--ok); }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 10, 18, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 40;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      width: min(720px, 100%);
+      max-height: min(90vh, 900px);
+      overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .modal h3 { margin: 0 0 12px; font-size: 1rem; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+    .form-grid label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .form-grid textarea { min-height: 72px; resize: vertical; font-family: inherit; }
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .empty {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Chiby · 知识库管理</h1>
+    <nav>
+      <a href="/terminal">终端</a>
+      <a href="/demo/mobile-im">掌上 IM</a>
+      <a href="/demo/doc-hub">企业文档库</a>
+      <a href="/docs" target="_blank" rel="noopener">API 文档</a>
+    </nav>
+  </header>
+
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="检索症状 / 标题 / 标签…" />
+    <select id="mode">
+      <option value="kb">知识条目</option>
+      <option value="script">脚本库</option>
+      <option value="all">全部检索</option>
+    </select>
+    <select id="categoryFilter">
+      <option value="">全部分类</option>
+    </select>
+    <button id="btnSearch" type="button">检索</button>
+    <button id="btnRefresh" class="ghost" type="button">刷新列表</button>
+    <button id="btnNew" type="button">新建条目</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <main>
+    <section class="panel">
+      <h2>条目列表 <span class="muted" id="listHint"></span></h2>
+      <div class="list-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:28%">标题</th>
+              <th>分类</th>
+              <th>来源</th>
+              <th>置信</th>
+              <th>标签</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="empty" id="listEmpty" hidden>暂无条目。点「新建条目」或让 Agent 沉淀。</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>详情</h2>
+      <div class="detail" id="detail">
+        <div class="empty">从左侧选择一条，或新建。</div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="modal" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h3 id="modalTitle">新建知识条目</h3>
+      <form id="kbForm" class="form-grid">
+        <input type="hidden" id="f_id" />
+        <label class="full">标题 *
+          <input id="f_title" required maxlength="200" />
+        </label>
+        <label>分类
+          <select id="f_category"></select>
+        </label>
+        <label>置信度
+          <select id="f_confidence">
+            <option value="high">high</option>
+            <option value="medium" selected>medium</option>
+            <option value="low">low</option>
+          </select>
+        </label>
+        <label class="full">症状 / 现象 *
+          <textarea id="f_symptom" required></textarea>
+        </label>
+        <label class="full">根因 *
+          <textarea id="f_root_cause" required></textarea>
+        </label>
+        <label class="full">修复方案 *
+          <textarea id="f_remediation" required></textarea>
+        </label>
+        <label class="full">验证方法
+          <textarea id="f_verify_method"></textarea>
+        </label>
+        <label>适用服务
+          <input id="f_service" placeholder="如 nginx" />
+        </label>
+        <label>适用 OS（逗号分隔）
+          <input id="f_os" placeholder="linux,ubuntu" />
+        </label>
+        <label class="full">标签（逗号分隔）
+          <input id="f_tags" placeholder="nginx,502" />
+        </label>
+        <label class="full">备注
+          <textarea id="f_notes"></textarea>
+        </label>
+        <div class="form-actions full">
+          <button type="button" class="ghost" id="btnCancel">取消</button>
+          <button type="submit" id="btnSave">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+(function () {
+  const API = "/api/kb";
+  const CATEGORIES = [
+    ["other", "其他"],
+    ["system_monitor", "系统监控"],
+    ["user_management", "用户管理"],
+    ["package_management", "包管理"],
+    ["service_ops", "服务运维"],
+    ["network_ops", "网络运维"],
+    ["security", "安全"],
+    ["database", "数据库"],
+    ["docker_k8s", "容器/K8s"],
+    ["failure_recovery", "故障恢复"],
+  ];
+
+  const el = (id) => document.getElementById(id);
+  let selectedId = "";
+  let listMode = "list"; // list | search
+  let cache = [];
+
+  function toast(msg, ok) {
+    const t = el("toast");
+    t.textContent = msg;
+    t.className = "toast show " + (ok ? "ok" : "err");
+    clearTimeout(toast._tm);
+    toast._tm = setTimeout(() => { t.className = "toast"; }, 2800);
+  }
+
+  async function api(path, opts) {
+    const res = await fetch(API + path, {
+      headers: { "Content-Type": "application/json", ...(opts && opts.headers || {}) },
+      ...opts,
+    });
+    let data = null;
+    const text = await res.text();
+    try { data = text ? JSON.parse(text) : null; } catch (_) { data = { detail: text }; }
+    if (!res.ok) {
+      const detail = (data && (data.detail || data.error)) || res.statusText;
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    }
+    return data;
+  }
+
+  function fillCategorySelects() {
+    const opts = CATEGORIES.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
+    el("f_category").innerHTML = opts;
+    el("categoryFilter").innerHTML =
+      '<option value="">全部分类</option>' + opts;
+  }
+
+  function tagsHtml(tags) {
+    return (tags || []).slice(0, 6).map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+  }
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function splitCsv(s) {
+    return String(s || "")
+      .split(/[,，]/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+  }
+
+  async function loadStats() {
+    try {
+      const s = await api("/stats");
+      el("stats").innerHTML = [
+        ["KB", s.kb_entries ?? "—"],
+        ["脚本", s.script_entries ?? "—"],
+        ["最佳实践", s.best_practices ?? "—"],
+      ].map(([k, v]) => `<span class="chip">${k} <b>${v}</b></span>`).join("");
+      if (s.db_path) {
+        el("stats").innerHTML += `<span class="chip">库路径 <b title="${escapeHtml(s.db_path)}">${escapeHtml(String(s.db_path).split(/[/\\\\]/).slice(-2).join("/"))}</b></span>`;
+      }
+    } catch (e) {
+      el("stats").innerHTML = `<span class="chip">统计加载失败：${escapeHtml(e.message)}</span>`;
+    }
+  }
+
+  function renderList(rows) {
+    cache = rows || [];
+    const tb = el("tbody");
+    el("listEmpty").hidden = cache.length > 0;
+    el("listHint").textContent = cache.length ? `· ${cache.length} 条` : "";
+    tb.innerHTML = cache.map((r) => {
+      const id = r.id || r.entry_id || "";
+      const title = r.title || r.name || "(无标题)";
+      const cat = r.category || "—";
+      const src = r.source || r.entry_type || "—";
+      const conf = r.confidence || r.risk_level || "—";
+      const active = id && id === selectedId ? " active" : "";
+      return `<tr class="${active}" data-id="${escapeHtml(id)}" data-type="${escapeHtml(r.entry_type || "kb")}">
+        <td><b>${escapeHtml(title)}</b><div class="muted" style="font-size:0.72rem;margin-top:3px">${escapeHtml(id)}</div></td>
+        <td>${escapeHtml(cat)}</td>
+        <td>${escapeHtml(src)}</td>
+        <td>${escapeHtml(conf)}</td>
+        <td>${tagsHtml(r.tags)}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  async function loadList() {
+    listMode = "list";
+    const cat = el("categoryFilter").value;
+    const qs = new URLSearchParams({ limit: "100" });
+    if (cat) qs.set("category", cat);
+    const data = await api("/kb?" + qs.toString());
+    renderList(data.entries || []);
+    if (selectedId) {
+      const still = (data.entries || []).some((e) => e.id === selectedId);
+      if (still) await showDetail(selectedId, "kb");
+      else {
+        selectedId = "";
+        el("detail").innerHTML = '<div class="empty">从左侧选择一条，或新建。</div>';
+      }
+    }
+  }
+
+  async function doSearch() {
+    const q = el("q").value.trim();
+    if (!q) {
+      await loadList();
+      return;
+    }
+    listMode = "search";
+    const mode = el("mode").value || "kb";
+    const qs = new URLSearchParams({ q, mode, limit: "50" });
+    const data = await api("/search?" + qs.toString());
+    const rows = (data.results || []).map((r) => ({
+      id: r.entry_id,
+      entry_id: r.entry_id,
+      title: r.title,
+      category: r.category,
+      source: r.entry_type,
+      entry_type: r.entry_type,
+      confidence: r.confidence || r.risk_level,
+      tags: r.tags,
+      snippet: r.snippet,
+      score: r.score,
+    }));
+    renderList(rows);
+    el("listHint").textContent = `· 检索命中 ${data.total || rows.length} · ${data.took_ms || 0} ms`;
+  }
+
+  function formBody() {
+    return {
+      title: el("f_title").value.trim(),
+      category: el("f_category").value || "other",
+      symptom: el("f_symptom").value.trim(),
+      root_cause: el("f_root_cause").value.trim(),
+      remediation: el("f_remediation").value.trim(),
+      verify_method: el("f_verify_method").value.trim() || null,
+      applicable_os: splitCsv(el("f_os").value),
+      applicable_service: el("f_service").value.trim() || null,
+      tags: splitCsv(el("f_tags").value),
+      confidence: el("f_confidence").value || "medium",
+      notes: el("f_notes").value.trim() || null,
+    };
+  }
+
+  function openModal(entry) {
+    el("modal").classList.add("open");
+    if (entry) {
+      el("modalTitle").textContent = "编辑知识条目";
+      el("f_id").value = entry.id || "";
+      el("f_title").value = entry.title || "";
+      el("f_category").value = entry.category || "other";
+      el("f_confidence").value = entry.confidence || "medium";
+      el("f_symptom").value = entry.symptom || "";
+      el("f_root_cause").value = entry.root_cause || "";
+      el("f_remediation").value = entry.remediation || "";
+      el("f_verify_method").value = entry.verify_method || "";
+      el("f_service").value = entry.applicable_service || "";
+      el("f_os").value = (entry.applicable_os || []).join(",");
+      el("f_tags").value = (entry.tags || []).join(",");
+      el("f_notes").value = entry.notes || "";
+    } else {
+      el("modalTitle").textContent = "新建知识条目";
+      el("kbForm").reset();
+      el("f_id").value = "";
+      el("f_confidence").value = "medium";
+      el("f_category").value = "other";
+    }
+  }
+
+  function closeModal() {
+    el("modal").classList.remove("open");
+  }
+
+  async function showDetail(id, type) {
+    selectedId = id;
+    [...el("tbody").querySelectorAll("tr")].forEach((tr) => {
+      tr.classList.toggle("active", tr.dataset.id === id);
+    });
+    if ((type || "kb") !== "kb") {
+      // 脚本等：跳详情 API
+      try {
+        if (type === "script") {
+          const s = await api("/scripts/" + encodeURIComponent(id));
+          el("detail").innerHTML = `
+            <div class="title">${escapeHtml(s.name)}</div>
+            <div class="meta">id=${escapeHtml(s.id)} · ${escapeHtml(s.language)} · risk=${escapeHtml(s.risk_level)}</div>
+            <div class="block"><label>描述</label><pre>${escapeHtml(s.description)}</pre></div>
+            <div class="block"><label>内容</label><pre>${escapeHtml(s.content)}</pre></div>
+            <div class="detail-actions">
+              <button class="ghost" type="button" disabled title="脚本编辑请用 /api/kb/scripts">脚本请走 API</button>
+            </div>`;
+          return;
+        }
+      } catch (e) {
+        toast(e.message, false);
+      }
+    }
+    try {
+      const e = await api("/kb/" + encodeURIComponent(id));
+      el("detail").innerHTML = `
+        <div class="title">${escapeHtml(e.title)}</div>
+        <div class="meta">
+          id=${escapeHtml(e.id)} · ${escapeHtml(e.category)} · ${escapeHtml(e.confidence)}
+          · source=${escapeHtml(e.source)}
+          · 成功 ${e.success_count || 0} / 失败 ${e.failure_count || 0}
+        </div>
+        <div class="block"><label>症状</label><pre>${escapeHtml(e.symptom)}</pre></div>
+        <div class="block"><label>根因</label><pre>${escapeHtml(e.root_cause)}</pre></div>
+        <div class="block"><label>修复</label><pre>${escapeHtml(e.remediation)}</pre></div>
+        <div class="block"><label>验证</label><pre>${escapeHtml(e.verify_method || "—")}</pre></div>
+        <div class="block"><label>标签</label><div>${tagsHtml(e.tags) || '<span class="muted">无</span>'}</div></div>
+        <div class="block"><label>备注</label><pre>${escapeHtml(e.notes || "—")}</pre></div>
+        <div class="detail-actions">
+          <button type="button" id="btnEdit">编辑</button>
+          <button type="button" class="danger" id="btnDelete">删除</button>
+        </div>`;
+      el("btnEdit").onclick = () => openModal(e);
+      el("btnDelete").onclick = () => deleteEntry(e.id, e.title);
+    } catch (err) {
+      el("detail").innerHTML = `<div class="empty">${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  async function deleteEntry(id, title) {
+    if (!confirm(`确认删除「${title || id}」？此操作不可撤销。`)) return;
+    try {
+      await api("/kb/" + encodeURIComponent(id), { method: "DELETE" });
+      toast("已删除", true);
+      selectedId = "";
+      el("detail").innerHTML = '<div class="empty">从左侧选择一条，或新建。</div>';
+      await loadStats();
+      if (listMode === "search" && el("q").value.trim()) await doSearch();
+      else await loadList();
+    } catch (e) {
+      toast(e.message, false);
+    }
+  }
+
+  el("tbody").addEventListener("click", (ev) => {
+    const tr = ev.target.closest("tr[data-id]");
+    if (!tr) return;
+    showDetail(tr.dataset.id, tr.dataset.type || "kb");
+  });
+
+  el("btnSearch").onclick = () => doSearch().catch((e) => toast(e.message, false));
+  el("btnRefresh").onclick = () => {
+    el("q").value = "";
+    loadList().then(loadStats).catch((e) => toast(e.message, false));
+  };
+  el("btnNew").onclick = () => openModal(null);
+  el("btnCancel").onclick = closeModal;
+  el("modal").addEventListener("click", (ev) => {
+    if (ev.target === el("modal")) closeModal();
+  });
+  el("q").addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      doSearch().catch((e) => toast(e.message, false));
+    }
+  });
+  el("categoryFilter").addEventListener("change", () => {
+    loadList().catch((e) => toast(e.message, false));
+  });
+
+  el("kbForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const body = formBody();
+    if (!body.title || !body.symptom || !body.root_cause || !body.remediation) {
+      toast("标题、症状、根因、修复为必填", false);
+      return;
+    }
+    const id = el("f_id").value.trim();
+    try {
+      el("btnSave").disabled = true;
+      if (id) {
+        await api("/kb/" + encodeURIComponent(id), {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        });
+        toast("已更新", true);
+        selectedId = id;
+      } else {
+        const created = await api("/kb", {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        toast("已创建 " + (created.id || ""), true);
+        selectedId = created.id || "";
+      }
+      closeModal();
+      await loadStats();
+      await loadList();
+      if (selectedId) await showDetail(selectedId, "kb");
+    } catch (e) {
+      toast(e.message, false);
+    } finally {
+      el("btnSave").disabled = false;
+    }
+  });
+
+  fillCategorySelects();
+  Promise.all([loadStats(), loadList()]).catch((e) => toast(e.message, false));
+})();
+  </script>
+</body>
+</html>

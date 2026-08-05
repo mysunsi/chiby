@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chibyterm"
+version = "0.1.2"
+description = "ChibyTerm（赤壁终端）— AI-driven Web ops terminal"
+readme = { text = "ChibyTerm — open-source Web ops terminal (SSH/WinRM + closure + KnowledgeHub).\n\nInstall: ``pip install chibyterm``\n\nRun: ``uvicorn chibyterm.main:app --host 127.0.0.1 --port 8000``\n", content-type = "text/markdown" }
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Chiby" }]
+dependencies = [
+    "chibycore>=0.1.2,<1.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+    "websockets>=11.0",
+    "pydantic>=2.0,<2.8",
+    "python-multipart>=0.0.6",
+    "httpx>=0.25",
+    "PyYAML>=6.0",
+    "python-dotenv>=1.0.0",
+    "pywinpty>=1.1.6,<3; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-asyncio>=0.21", "build", "twine", "wheel"]
+
+[project.urls]
+Homepage = "https://chiby.ai"
+Repository = "https://github.com/chiby-ai/chibyterm"
+
+[project.scripts]
+# chibyterm = "chibyterm.main:..."  # optional CLI later
+
+[tool.setuptools.package-dir]
+chibyterm = "."
+
+[tool.setuptools]
+packages = [
+    "chibyterm",
+    "chibyterm.api",
+    "chibyterm.context_units",
+    "chibyterm.models",
+]
+
+[tool.setuptools.package-data]
+chibyterm = [
+    "web/*",
+    "web/vendor/*",
+    "web/help/*",
+    "web/help/*/*",
+]

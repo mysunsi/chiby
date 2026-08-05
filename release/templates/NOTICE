@@ -1,0 +1,25 @@
+Chiby (赤壁) — ops-bridge
+Copyright 2026 {{LEGAL_ENTITY}}
+Licensed under the Apache License, Version 2.0.
+
+This product includes or depends upon software developed by third parties:
+
+1. Hermes Agent
+   - Upstream: Nous Research (https://github.com/NousResearch/Hermes)
+   - License: MIT
+   - The Hermes Agent source code is NOT distributed within this repository.
+     It is referenced as an optional runtime dependency. The MIT copyright
+     and license notice of Hermes Agent must be preserved wherever it is
+     integrated or redistributed.
+
+2. Additional third-party components and their respective licenses are
+   declared in the repository's dependency metadata (requirements.txt /
+   pyproject.toml) and in per-file license headers where applicable.
+
+This NOTICE file must be retained in all redistributions of the Work or
+Derivative Works thereof, in accordance with Apache License 2.0 §4(d).
+
+Proprietary components (e.g. the Chiby operations hub / pro_core, the
+mobile datacenter backend, and the Hermes/Chiby bridge) are NOT included
+in this open-source repository and are distributed separately under
+commercial terms.

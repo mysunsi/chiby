@@ -1,0 +1,64 @@
+{
+  "name": "ai-ops-remediate",
+  "displayName": "AI Ops Remediate",
+  "description": "集成终端错误检测并调用 AI 运维自愈 API（/api/v1/remediate）",
+  "version": "0.1.0",
+  "publisher": "ai-ops-assistant",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "AI Ops Remediate",
+      "properties": {
+        "aiOps.baseUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "自愈 API 根地址（不含路径）"
+        },
+        "aiOps.apiKey": {
+          "type": "string",
+          "default": "YOUR_SECRET_API_KEY",
+          "description": "请求头 X-API-Key，需与后端 MY_PROJECT_API_KEY 一致"
+        },
+        "aiOps.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否启用终端输出监听"
+        },
+        "aiOps.debounceMs": {
+          "type": "number",
+          "default": 45000,
+          "description": "同一终端两次触发 remediate 的最小间隔（毫秒）"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "aiOps.remediateLastError",
+        "title": "AI Ops: 使用当前缓冲发起一次自愈请求"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "axios": "^1.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.5.0"
+  }
+}

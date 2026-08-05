@@ -1,0 +1,40 @@
+name: remote_rollback
+title: 回滚远端文件（remote_restore 别名）
+description: 与 remote_restore 相同；解析阶段常归一为 remote_restore。
+version: "1.0.0"
+author: chiby-maintainers
+category: remote_fs
+skill_pack: remote_fs
+type: host_write
+host_required: true
+status: approved
+parameters:
+  - name: host
+    type: string
+    required: true
+  - name: path
+    type: string
+    required: true
+  - name: backup_path
+    type: string
+    required: false
+confirm_fields:
+  - host
+  - path
+  - backup_path
+  - preview
+security:
+  risk_level: high
+  needs_confirmation: true
+  is_mutate: true
+  read_only: false
+executor:
+  type: python_function
+  entry: run
+  delegates_to: terminal.mobile.remote_tools
+dependencies:
+  - id: remote_backup
+    kind: tool
+    optional: false
+usage_example: |
+  {"tool":"remote_rollback","host":"web1","path":"/etc/nginx/nginx.conf"}

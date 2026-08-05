@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "remediator-api"
+version = "1.0.0"
+description = "FastAPI 封装（自愈 HTTP API），与仓库 requirements.txt 并存"
+requires-python = ">=3.8"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+    "python-dotenv>=1.0.0",
+]
+
+# 仓库目录即为 Python 包「remediator」的根（core/api/remediation 为其子包）。
+# 禁用自动发现，避免 setuptools 将 api/core/remediation 误判为三个顶层包。
+[tool.setuptools]
+package-dir = { "remediator" = "." }
+packages = [
+    "remediator",
+    "remediator.api",
+    "remediator.core",
+    "remediator.core.rules",
+    "remediator.remediation",
+]

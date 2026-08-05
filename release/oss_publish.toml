@@ -1,0 +1,114 @@
+# =============================================================================
+# ChibyTerm 开源发布配置（基于 Assistant 仓库 + GitHub 公开仓现状）
+# 填写说明：
+#   - 已按 packages/*/pyproject.toml、README、SECURITY、release/ci 等对齐
+#   - GitHub 公开镜像以实际仓为准：https://github.com/mysunsi/chiby
+#   - 带 # 的行是注释；留空字段表示仓库内尚无确证，需人工确认
+# =============================================================================
+
+[github]
+# GitHub 公开镜像仓库（owner/name）；与浏览器地址栏一致
+# 注意：公开仓名为 chiby，不是历史草稿 chiby-ai/chibyterm
+repo = "mysunsi/chiby"
+
+# 默认分支（GitHub 仓与 release/ci/ci.yml 均为 main）
+default_branch = "main"
+
+# 鉴权方式（已选定，便于 Agent 定期同步）：SSH
+# - 远程：git@github.com:mysunsi/chiby.git
+# - 本机私钥：~/.ssh/id_ed25519_github_chiby（勿入库）
+# - 公钥需加入 GitHub → Settings → SSH and GPG keys
+# - Git 使用：core.sshCommand = Git for Windows 自带 ssh.exe
+auth = "ssh"
+ssh_remote = "git@github.com:mysunsi/chiby.git"
+
+# 首次发布版本标签
+# packages/chibycore 与 packages/chibyterm 当前均为 version = "0.1.2"（TestPyPI 内部试用）
+# 正式公开镜像 tag 仍可按实际上架版本调整
+first_release_tag = "v0.1.2"
+
+
+[git_identity]
+# 个人提交身份（会出现在 Git 提交记录中）
+name = "张全林"
+email = "285193443@qq.com"
+
+
+[company]
+# 版权主体：个人（不写公司法律实体）
+legal_name = "张全林"
+
+# 官网
+domain = "https://chiby.cn"
+
+# 安全漏洞报告邮箱
+security_email = "security@chiby.cn"
+
+
+[notice]
+# 根目录 NOTICE 已含 Hermes / xterm.js / FastAPI / Pydantic / Python
+# 留空：发布流程用仓库现有 NOTICE（或默认模板）；无需再追加
+extra_third_party_notice = """
+"""
+
+
+[package]
+# 主入口包（pip install 名）；同仓还需同步发布底层库 chibycore
+# 注意：PyPI 包名仍是 chibyterm；GitHub 仓名为 chiby（mysunsi/chiby）
+package_name = "chibyterm"
+
+# 另需一并发布（非本字段，见 extra_notes）
+# companion_package = "chibycore"
+
+# Python：requires-python = ">=3.10"；勿含 3.9
+# CI 模板当前只跑 3.11；矩阵建议覆盖声明支持区间
+python_versions = ["3.10", "3.11", "3.12"]
+
+# 推 tag 后是否自动创建 GitHub Release（建议草稿，人工确认后发布）
+auto_github_release = true
+
+
+[custom]
+extra_notes = """
+1. 开源分发是两包，不是单包：
+   - chibycore（先构建/先上传）
+   - chibyterm（依赖 chibycore>=0.1.1,<1.0.0）
+   正式安装入口：uvicorn chibyterm.main:app（勿依赖开发别名 terminal）
+
+2. GitHub 公开仓：
+   - https://github.com/mysunsi/chiby （公开 / Apache-2.0 / 默认分支 main）
+   - 仓名 chiby ≠ pip 包名 chibyterm；文档与 badge 请指向 mysunsi/chiby
+   - 当前远端可能仍是 Initial commit 占位，正式镜像需用 SVN 导出内容覆盖推送
+
+3. 版本现状：
+   - packages/*/pyproject.toml → 0.1.2（TestPyPI 内部试用）
+   - CHANGELOG.md：[0.1.2] 试用补强；[0.1.1] 首发口径
+   - 首次 GitHub tag 建议与实际上传 PyPI 的版本一致
+
+4. CI / 发布流水线现状（release/ci/）：
+   - ci.yml：Python 3.11；pytest -m "not proprietary"；含 gitleaks；另有 ops-ui build（公开仓是否保留需再确认）
+   - release.yml：推 v* tag → build → PyPI OIDC Trusted Publishing（pypa/gh-action-pypi-publish）
+   - 与「长期 PYPI_API_TOKEN」方案不同；若继续用 OIDC，需在 PyPI 项目侧配置 Trusted Publisher（仓库填 mysunsi/chiby），不必强依赖 PYPI_API_TOKEN
+   - 当前 release.yml 未创建 GitHub Release 草稿；若 auto_github_release=true，需在 workflow 中补 softprops/action-gh-release（draft: true）
+
+5. 发布节奏建议（与 handbook P2-3/P2-4 一致）：
+   - TestPyPI 试发已做过；正式前再确认两包版本号同步
+   - 正式 PyPI：先 chibycore，后 chibyterm；同版本号原则上不可覆盖
+   - 公开 README badge 在正式上架后再启用
+
+6. SVN → GitHub 镜像：
+   - 源仓仍是 SVN（Open/Assistant）
+   - 目标：git@github.com:mysunsi/chiby.git
+   - 同步脚本：powershell -File scripts/sync_oss_to_github.ps1
+   - 首次若远端仅有无关 Initial commit：加 -ForcePush
+   - 日常增量：同命令（无需 Force）；镜像目录默认 D:\\Open\\_oss_mirror\\chiby
+   - 导出排除 proprietary/、data/、.env、密钥与闭源相关测试/文档名
+   - 门禁：python scripts/check_oss_boundary.py（脚本默认会跑）
+
+7. 合规与边界：
+   - 许可：Apache-2.0（根 LICENSE / NOTICE；与 GitHub 仓一致）
+   - 版权主体按个人：张全林（不写公司）
+   - 对外域名统一 chiby.cn（仓库内若仍写 chiby.ai，发布时需替换）
+   - 闭源勿进公开仓：proprietary/chiby_mobile、proprietary/chiby_hermes_bridge
+   - 门禁：python scripts/check_oss_boundary.py
+"""

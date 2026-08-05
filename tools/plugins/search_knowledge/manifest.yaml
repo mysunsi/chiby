@@ -1,0 +1,36 @@
+name: search_knowledge
+title: 统一知识检索
+description: 并行检索 KnowledgeHub + DocHub，RRF 融合。请主动调用，勿等用户说查文档。
+version: "1.0.0"
+author: chiby-maintainers
+category: knowledge
+skill_pack: knowledge
+type: local_readonly
+host_required: false
+status: approved
+parameters:
+  - name: q
+    type: string
+    required: true
+  - name: limit
+    type: integer
+    required: false
+  - name: sources
+    type: array
+    required: false
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+dependencies:
+  - id: kb_search
+    kind: tool
+    optional: true
+  - id: doc_search
+    kind: tool
+    optional: true
+usage_example: |
+  {"tool":"search_knowledge","q":"nginx 502 排查","limit":5}

@@ -1,0 +1,17 @@
+.env
+
+# 掌上会话运行时状态（勿提交）
+data/mobile_sessions/*.json
+
+# 主机凭据与本地主密钥（OPS_ENCRYPT_HOST_SECRETS=1 时生成）
+data/.ops_master_key
+data/hosts.json
+data/hosts.json.bak
+
+# 审计 / transcript 可能含运维上下文（勿默认提交）
+data/mobile_audit.jsonl
+data/audit/
+data/usage/
+data/mobile_transcripts/
+data/transcripts/
+

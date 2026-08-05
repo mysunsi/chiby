@@ -1,0 +1,15 @@
+{
+  "title": "ChibyTerm 說明",
+  "default": "quick-start",
+  "items": [
+    { "id": "quick-start", "title": "快速開始", "file": "quick-start.md" },
+    { "id": "hosts-terminal", "title": "主機與終端", "file": "hosts-terminal.md" },
+    { "id": "fleet", "title": "Fleet（集群群發）", "file": "fleet.md" },
+    { "id": "natural-language", "title": "自然語言維運", "file": "natural-language.md" },
+    { "id": "llm-settings", "title": "模型設定", "file": "llm-settings.md" },
+    { "id": "safety", "title": "確認卡與安全", "file": "safety.md" },
+    { "id": "knowledge", "title": "知識庫與文件庫", "file": "knowledge.md" },
+    { "id": "account", "title": "登入與帳號", "file": "account.md" },
+    { "id": "faq", "title": "常見問題", "file": "faq.md" }
+  ]
+}

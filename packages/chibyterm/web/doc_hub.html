@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chiby · 企业文档库</title>
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #152033;
+      --line: #2a3a4f;
+      --text: #e8eef8;
+      --muted: #8b9bb4;
+      --accent: #3d9cfd;
+      --ok: #3ecf8e;
+      --warn: #f0b429;
+      --danger: #f07178;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(900px 420px at 80% -10%, #1a3d5c 0%, transparent 55%),
+        radial-gradient(700px 380px at 0% 100%, #12263a 0%, var(--bg) 50%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    header h1 { margin: 0; font-size: 1.1rem; font-weight: 650; }
+    header nav a {
+      color: var(--accent);
+      text-decoration: none;
+      margin-left: 14px;
+      font-size: 0.9rem;
+    }
+    .toolbar {
+      padding: 12px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,0.15);
+    }
+    .toolbar input, .path-row input {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.88rem;
+    }
+    .toolbar input[type="search"] { min-width: 220px; flex: 1; }
+    button {
+      background: var(--accent);
+      color: #041018;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.86rem;
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    button.danger { background: var(--danger); color: #1a0505; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    main {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 0;
+      min-height: calc(100vh - 120px);
+    }
+    @media (max-width: 960px) {
+      main { grid-template-columns: 1fr; }
+    }
+    .panel {
+      border-right: 1px solid var(--line);
+      padding: 14px 18px;
+      overflow: auto;
+    }
+    .panel:last-child { border-right: 0; }
+    .muted { color: var(--muted); font-size: 0.85rem; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .card h3 { margin: 0 0 6px; font-size: 0.95rem; }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: #243447;
+    }
+    .badge.ready { color: var(--ok); }
+    .badge.pending { color: var(--warn); }
+    .badge.failed { color: var(--danger); }
+    .hit-score { color: var(--accent); font-weight: 700; }
+    .path-row { display: flex; gap: 8px; width: 100%; margin-top: 8px; }
+    .path-row input { flex: 1; }
+    #msg { padding: 8px 18px; color: var(--muted); font-size: 0.85rem; min-height: 1.2em; }
+    #msg.err { color: var(--danger); }
+    #msg.ok { color: var(--ok); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Chiby · 企业文档库（DocHub）</h1>
+    <nav>
+      <a href="/demo/knowledge-hub">运维知识库</a>
+      <a href="/demo/mobile-im">掌上 IM</a>
+      <a href="/terminal">终端</a>
+      <a href="/docs">API</a>
+    </nav>
+  </header>
+
+  <div class="toolbar">
+    <input type="file" id="file" accept=".md,.txt,.markdown,.pdf,.docx" multiple />
+    <span class="muted" id="filePickHint">可多选</span>
+    <button id="btnUpload">上传入库</button>
+    <button class="ghost" id="btnRefresh">刷新列表</button>
+    <button class="ghost" id="btnReindex" title="按原始文件重建向量">重建索引</button>
+    <span class="muted" id="reindexHint" style="max-width:280px;line-height:1.35">
+      修改切片参数后需重建索引；重建中仍可检索，结果可能逐步增多
+    </span>
+    <input type="search" id="q" placeholder="语义试搜…" />
+    <select id="strategy" title="检索策略">
+      <option value="hybrid" selected>混合</option>
+      <option value="vector">仅向量</option>
+      <option value="keyword">仅关键词</option>
+    </select>
+    <button id="btnSearch">检索</button>
+  </div>
+  <div class="toolbar path-row" style="border-top:0;padding-top:0">
+    <span class="muted" style="margin-right:4px">可多选文件；大批量也可用目录导入</span>
+    <input id="dirPath" placeholder="本机目录绝对路径（批量导入）" />
+    <button class="ghost" id="btnIngestDir">目录导入</button>
+  </div>
+  <div id="msg"></div>
+
+  <main>
+    <section class="panel">
+      <p class="muted">文档列表 · 与运维 KnowledgeHub 分离 · 向量 TopK 检索</p>
+      <div id="list"><p class="muted">加载中…</p></div>
+    </section>
+    <section class="panel">
+      <p class="muted">检索结果</p>
+      <div id="hits"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const msg = (t, kind) => {
+      const el = $("msg");
+      el.textContent = t || "";
+      el.className = kind || "";
+    };
+
+    async function api(path, opts) {
+      const r = await fetch(path, opts);
+      const text = await r.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = { detail: text }; }
+      if (!r.ok) {
+        let detail = data.detail || data.error || r.statusText;
+        if (Array.isArray(detail)) {
+          detail = detail.map((x) => x.msg || JSON.stringify(x)).join("; ");
+        } else if (detail && typeof detail === "object") {
+          detail = JSON.stringify(detail);
+        }
+        throw new Error(detail);
+      }
+      return data;
+    }
+
+    $("file").addEventListener("change", () => {
+      const n = ($("file").files || []).length;
+      const hint = $("filePickHint");
+      if (hint) hint.textContent = n ? `已选 ${n} 个文件` : "可多选";
+    });
+
+    async function refresh() {
+      const data = await api("/api/docs?limit=100");
+      const box = $("list");
+      if (!data.entries || !data.entries.length) {
+        box.innerHTML = '<p class="muted">暂无文档。上传 Markdown / PDF / Word 开始。</p>';
+        return;
+      }
+      box.innerHTML = data.entries.map((d) => `
+        <div class="card">
+          <div class="row">
+            <div>
+              <h3>${escapeHtml(d.title || d.id)}</h3>
+              <div class="muted">${escapeHtml(d.id)} · ${escapeHtml(d.mime_or_ext || "")} · ${d.chunk_count || 0} chunks</div>
+              <div class="muted">${escapeHtml(d.source_path || "")}</div>
+              ${d.error ? `<div class="muted" style="color:var(--danger)">${escapeHtml(d.error)}</div>` : ""}
+            </div>
+            <div style="text-align:right">
+              <span class="badge ${escapeHtml(d.status)}">${escapeHtml(d.status)}</span>
+              <div style="margin-top:8px">
+                <button class="danger" data-del="${escapeHtml(d.id)}">删除</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join("");
+      box.querySelectorAll("[data-del]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("确认删除该文档及其向量？")) return;
+          try {
+            await api("/api/docs/" + btn.getAttribute("data-del"), { method: "DELETE" });
+            msg("已删除", "ok");
+            refresh();
+          } catch (e) { msg(String(e.message || e), "err"); }
+        });
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    async function doSearch() {
+      const q = $("q").value.trim();
+      if (!q) { msg("请输入检索词", "err"); return; }
+      try {
+        const strat = ($("strategy") && $("strategy").value) || "hybrid";
+        const data = await api(
+          "/api/docs/search?q=" + encodeURIComponent(q) +
+          "&limit=8&strategy=" + encodeURIComponent(strat) +
+          "&expand_context=true"
+        );
+        const box = $("hits");
+        if (!data.results || !data.results.length) {
+          box.innerHTML = '<p class="muted">无命中</p>';
+          msg(`检索完成 · ${data.strategy || strat} · ${data.took_ms || 0} ms · 0 条`, "ok");
+          return;
+        }
+        box.innerHTML = data.results.map((h, i) => `
+          <div class="card">
+            <div class="row">
+              <h3>${i + 1}. ${escapeHtml(h.title || h.doc_id)}</h3>
+              <span class="hit-score">${Number(h.score || 0).toFixed(3)}</span>
+            </div>
+            <div class="muted">${escapeHtml(h.title_chain || "")}</div>
+            <div class="muted">${escapeHtml(h.chunk_id)} · ${escapeHtml(h.source_path || "")}</div>
+            <p style="margin:8px 0 0;line-height:1.45">${escapeHtml(h.snippet)}</p>
+          </div>
+        `).join("");
+        msg(`检索完成 · ${data.strategy || strat} · ${data.took_ms || 0} ms · ${data.total} 条`, "ok");
+      } catch (e) { msg(String(e.message || e), "err"); }
+    }
+
+    $("btnRefresh").addEventListener("click", () => refresh().catch((e) => msg(String(e.message || e), "err")));
+    $("btnSearch").addEventListener("click", doSearch);
+    $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+    $("btnReindex").addEventListener("click", async () => {
+      if (!confirm("确认按已存原始文件重建向量索引？")) return;
+      try {
+        const r = await api("/api/docs/reindex", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wipe_vectors: false }),
+        });
+        const jid = r.job_id;
+        msg(`重建任务已启动 ${jid}`, "ok");
+        const poll = async () => {
+          const st = await api("/api/docs/reindex/" + jid + "/status");
+          msg(
+            `重建 ${st.status} · ${st.done || 0}/${st.total || 0} · ok=${st.ok || 0} fail=${st.failed || 0}`,
+            st.status === "done" && (st.failed || 0) ? "err" : "ok"
+          );
+          if (st.status !== "done") setTimeout(poll, 1200);
+          else refresh();
+        };
+        setTimeout(poll, 800);
+      } catch (e) { msg(String(e.message || e), "err"); }
+    });
+
+    $("btnUpload").addEventListener("click", async () => {
+      const list = Array.from(($("file").files || []));
+      if (!list.length) { msg("请先选择文件（可多选）", "err"); return; }
+      const btn = $("btnUpload");
+      btn.disabled = true;
+      try {
+        msg(`准备上传 ${list.length} 个文件…`);
+        const fd = new FormData();
+        for (const f of list) {
+          fd.append("files", f);
+        }
+        const r = await api("/api/docs/upload", { method: "POST", body: fd });
+        if (r.results) {
+          const fail = (r.results || []).filter((x) => !x.ok);
+          msg(
+            `批量完成：成功 ${r.imported || 0}/${r.total || list.length}` +
+              (fail.length ? `，失败 ${fail.length}` : ""),
+            fail.length ? "err" : "ok"
+          );
+        } else {
+          msg(
+            r.async
+              ? `已提交异步任务 ${r.job_id}`
+              : `已入库 ${r.doc_id || ""} · ${r.chunk_count || 0} chunks`,
+            "ok"
+          );
+        }
+        $("file").value = "";
+        await refresh();
+      } catch (e) {
+        msg(String(e.message || e), "err");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    $("btnIngestDir").addEventListener("click", async () => {
+      const path = $("dirPath").value.trim();
+      if (!path) { msg("请填写本机目录路径", "err"); return; }
+      try {
+        msg("目录导入中…");
+        const r = await api("/api/docs/ingest-path", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path, recursive: true, async_mode: true }),
+        });
+        msg(r.async ? `目录任务 ${r.job_id} · 共 ${r.total} 个文件` : `导入完成`, "ok");
+        setTimeout(() => refresh(), 1500);
+      } catch (e) { msg(String(e.message || e), "err"); }
+    });
+
+    (async () => {
+      try {
+        const st = await api("/api/docs/stats");
+        if (st.documents != null) {
+          let line =
+            `库中 ${st.documents} 篇` +
+            (st.chunk_count != null ? ` · ${st.chunk_count} chunks` : "") +
+            (st.chunk_avg_len != null ? ` · 均长 ${st.chunk_avg_len}` : "") +
+            (st.vector_backend ? ` · vec=${st.vector_backend}` : "") +
+            (st.embedding_backend ? ` · emb=${st.embedding_backend}` : "");
+          if (st.reindex_in_progress) {
+            line += ` · 重建中 ${st.reindex_done || 0}/${st.reindex_total || 0}`;
+          }
+          if (st.embedding_hint) line += ` · ${st.embedding_hint}`;
+          msg(line, st.reindex_in_progress ? "ok" : "");
+        }
+      } catch (_) {}
+      try {
+        await refresh();
+      } catch (e) {
+        msg(String(e.message || e), "err");
+        $("list").innerHTML = '<p class="muted">列表加载失败，请点「刷新列表」重试。</p>';
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+name: ssh_execute
+title: SSH 执行命令
+description: 在 SSH 主机上执行 command/script（可选流式）。确认卡按命令内容判定。
+version: "1.0.0"
+author: chiby-maintainers
+category: remote_shell
+skill_pack: remote_shell
+type: host_command
+host_required: true
+status: approved
+parameters:
+  - name: host
+    type: string
+    required: true
+  - name: command
+    type: string
+    required: false
+  - name: script
+    type: string
+    required: false
+  - name: timeout_sec
+    type: number
+    required: false
+  - name: stream
+    type: boolean
+    required: false
+confirm_fields:
+  - host
+  - command
+  - script
+  - timeout_sec
+  - stream
+  - preview
+security:
+  risk_level: medium
+  needs_confirmation: true
+  confirm_mode: command_content
+  is_mutate: true
+  read_only: false
+executor:
+  type: python_function
+  entry: run
+  delegates_to: terminal.mobile.remote_tools
+usage_example: |
+  {"tool":"ssh_execute","host":"web1","command":"df -h"}

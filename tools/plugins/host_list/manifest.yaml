@@ -1,0 +1,20 @@
+name: host_list
+title: 列出可见主机
+description: 返回当前 ACL 可见主机列表（目录发现，非选机；选中态见 HostTargets CDU）。
+version: "1.0.0"
+author: chiby-maintainers
+category: host
+skill_pack: host
+type: local_readonly
+host_required: false
+status: approved
+parameters: []
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+usage_example: |
+  {"tool":"host_list"}

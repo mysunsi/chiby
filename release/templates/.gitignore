@@ -1,0 +1,47 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Node / ops-ui ----
+node_modules/
+ops-ui/node_modules/
+ops-ui/dist/
+
+# ---- Secrets / 凭据（严禁入库） ----
+.env
+.env.*
+*.key
+*.pem
+id_rsa*
+id_ed25519*
+
+# ---- 运行时产物 / 数据 ----
+data/
+log/
+reports/
+*.db
+*.db.*
+*.sqlite
+*.json.bak
+transcripts/
+mobile_*/
+
+# ---- 编辑器 / OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---- 内部/专有（确保不进开源仓） ----
+terminal/mobile/
+terminal/hermes_bridge/
+proprietary/

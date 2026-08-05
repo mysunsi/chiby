@@ -1,0 +1,30 @@
+name: remote_syntax_check
+title: 远端语法检查
+description: 在目标主机对脚本做语法检查（只读；lang 默认 python）。
+version: "1.0.0"
+author: chiby-maintainers
+category: remote_fs
+skill_pack: remote_fs
+type: host_readonly
+host_required: true
+status: approved
+parameters:
+  - name: host
+    type: string
+    required: true
+  - name: path
+    type: string
+    required: true
+  - name: lang
+    type: string
+    required: false
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+  delegates_to: terminal.mobile.remote_tools
+usage_example: |
+  {"tool":"remote_syntax_check","host":"web1","path":"/tmp/a.py","lang":"python"}

@@ -1,0 +1,39 @@
+name: remote_search
+title: 远端搜索（remote_grep 别名）
+description: 与 remote_grep 相同；解析阶段常归一为 remote_grep。
+version: "1.0.0"
+author: chiby-maintainers
+category: remote_fs
+skill_pack: remote_fs
+type: host_readonly
+host_required: true
+status: approved
+parameters:
+  - name: host
+    type: string
+    required: true
+  - name: path
+    type: string
+    required: true
+  - name: pattern
+    type: string
+    required: true
+  - name: context
+    type: integer
+    required: false
+  - name: glob
+    type: string
+    required: false
+  - name: max_hits
+    type: integer
+    required: false
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+  delegates_to: terminal.mobile.remote_tools
+usage_example: |
+  {"tool":"remote_search","host":"web1","path":"/home/app","pattern":"TODO"}

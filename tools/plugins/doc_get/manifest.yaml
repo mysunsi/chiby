@@ -1,0 +1,26 @@
+name: doc_get
+title: 企业文档片段读取
+description: 按 doc_id / chunk_id 取正文。
+version: "1.0.0"
+author: chiby-maintainers
+category: document
+skill_pack: document
+type: local_readonly
+host_required: false
+status: approved
+parameters:
+  - name: doc_id
+    type: string
+    required: false
+  - name: chunk_id
+    type: string
+    required: false
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+usage_example: |
+  {"tool":"doc_get","chunk_id":"<id>"}

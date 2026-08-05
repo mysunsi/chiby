@@ -1,0 +1,15 @@
+{
+  "title": "ChibyTerm Help",
+  "default": "quick-start",
+  "items": [
+    { "id": "quick-start", "title": "Quick start", "file": "quick-start.md" },
+    { "id": "hosts-terminal", "title": "Hosts & terminal", "file": "hosts-terminal.md" },
+    { "id": "fleet", "title": "Fleet (cluster broadcast)", "file": "fleet.md" },
+    { "id": "natural-language", "title": "Natural language", "file": "natural-language.md" },
+    { "id": "llm-settings", "title": "Model settings", "file": "llm-settings.md" },
+    { "id": "safety", "title": "Confirm & safety", "file": "safety.md" },
+    { "id": "knowledge", "title": "Knowledge & docs", "file": "knowledge.md" },
+    { "id": "account", "title": "Sign-in & account", "file": "account.md" },
+    { "id": "faq", "title": "FAQ", "file": "faq.md" }
+  ]
+}

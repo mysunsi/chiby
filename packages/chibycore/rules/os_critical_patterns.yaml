@@ -1,0 +1,13 @@
+# OS 扩展高危模式 → 并入 PolicyEngine（extra_deny）
+extra_deny_patterns:
+  - '(?i)Remove-Item\s+-Recurse.*Windows'
+
+risk_keywords:
+  critical:
+    - "rm -rf /"
+    - "dd if="
+    - "format "
+    - "mkfs."
+  high:
+    - "chmod 777"
+    - "chmod -R 777"

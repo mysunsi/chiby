@@ -1,0 +1,30 @@
+name: get_content
+title: 统一知识正文
+description: 按 full_id 路由 kb_get / doc_get。
+version: "1.0.0"
+author: chiby-maintainers
+category: knowledge
+skill_pack: knowledge
+type: local_readonly
+host_required: false
+status: approved
+parameters:
+  - name: full_id
+    type: string
+    required: true
+security:
+  risk_level: low
+  needs_confirmation: false
+  read_only: true
+executor:
+  type: python_function
+  entry: run
+dependencies:
+  - id: kb_get
+    kind: tool
+    optional: true
+  - id: doc_get
+    kind: tool
+    optional: true
+usage_example: |
+  {"tool":"get_content","full_id":"doc:chunk:<id>"}
