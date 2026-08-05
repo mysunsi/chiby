@@ -131,4 +131,4 @@ Apache-2.0，详见 [LICENSE](./LICENSE) 和 [NOTICE](./NOTICE)。
 
 - GitHub Issues：https://github.com/chiby-ai/chibyterm/issues （公开镜像就绪后）
 - 安全漏洞：见 [SECURITY.md](./SECURITY.md)
-- 官网：https://chiby.ai
+- 官网：https://chiby.cn
